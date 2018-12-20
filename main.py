@@ -1,5 +1,6 @@
 import pygame
 import random
+import math
 import tilemaps
 from collections import defaultdict
 from statusbar import StatusBar
@@ -1574,11 +1575,12 @@ def do_using_popup(item):
     gameDisplay.blit(greyout, (0, 0))
     menu = gameDisplay.subsurface((700, 100, 450, 450))
     maxusable = 0
-    first = True
+    if 'energy' in player.usables[item]['gives']:
+        maxusable = int(math.ceil(((player.max_energy-player.inventory['energy']) /
+                                   player.usables[item]['gives']['energy'])))
     for key, value in player.usables[item]['costs'].items():
-        if first:
+        if maxusable == 0:
             maxusable = player.inventory[key]//value
-            first = False
         else:
             maxusable = min(maxusable, player.inventory[key]//value)
 
