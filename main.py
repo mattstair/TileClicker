@@ -138,7 +138,7 @@ RESOURCES = {
                        'minegives': {'stone': 10,
                                      'wood': 20},
                        'minecosts': {'energy': 20},
-                       'capacity': 4,
+                       'beds': 4,
                        'recruitcost': 20,
                        'confirmdestroy': True,
                        'upkeep': {'food': 1},
@@ -184,6 +184,27 @@ RESOURCES = {
                        'workradius': 2,
                        'upkeep': {'workers': 1},
                        'frequency': 5*ONE_SEC},
+             'wood generator': {'symbol': "WG",
+                                'minetime': 5*ONE_SEC,
+                                'minegives': {'iron': 5,
+                                              'stone': 10,
+                                              'wood': 10},
+                                'minecosts': {'energy': 20},
+                                'confirmdestroy': True,
+                                'powerproduced': 2,
+                                'upkeep': {'wood': 1},
+                                'frequency': 5*ONE_SEC},
+             'electric miner': {'symbol': "EM",
+                                'minetime': 5*ONE_SEC,
+                                'minegives': {'iron': 5,
+                                              'stone': 10,
+                                              'wood': 10},
+                                'minecosts': {'energy': 20},
+                                'confirmdestroy': True,
+                                'gathers': ['boulder', 'irondeposit', 'golddeposit'],
+                                'workradius': 3,
+                                'upkeep': {'power': 1},
+                                'frequency': 5*ONE_SEC}
              }
 
 ALL_RECIPES = {
@@ -245,7 +266,24 @@ BUILDABLES = {
                                        'stone': 20,
                                        'wood': 20,
                                        'energy': 30},
-                        'buildtime': 5 * ONE_SEC}
+                        'buildtime': 5 * ONE_SEC},
+              'wood generator': {'description': ['Consumes 1 wood and , ',
+                                                 'generates 2 power. '],
+                                 'canbuild': ['g', 'r', 's', 'i'],
+                                 'buildcosts': {'iron': 10,
+                                                'stone': 20,
+                                                'wood': 20,
+                                                'energy': 30},
+                                 'buildtime': 5 * ONE_SEC},
+              'electric miner': {'description': ['Automatically mines ',
+                                                 'boulders and ores. ',
+                                                 'Uses 1 power. '],
+                                 'canbuild': ['g', 'r', 's', 'i'],
+                                 'buildcosts': {'iron': 10,
+                                                'stone': 20,
+                                                'wood': 20,
+                                                'energy': 30},
+                                 'buildtime': 5 * ONE_SEC}
               }
 
 ITEMS = {
@@ -378,7 +416,15 @@ ITEMS = {
          'miner': {'i_cap': 'Miner',
                    'lower': 'miner',
                    'plural': 'miners',
-                   'plural_i_cap': 'Miners'}
+                   'plural_i_cap': 'Miners'},
+         'wood generator': {'i_cap': 'Wood generator',
+                            'lower': 'wood generator',
+                            'plural': 'wood generators',
+                            'plural_i_cap': 'Wood generators'},
+         'electric miner': {'i_cap': 'Electric miner',
+                            'lower': 'electric miner',
+                            'plural': 'electric miners',
+                            'plural_i_cap': 'Electric miners'}
          }
 
 PERKS = {
@@ -415,6 +461,12 @@ PERKS = {
                  'bonuses': {'minegives': {'boulder': {'stone': 0.5},
                                            'irondeposit': {'ironore': 0.5},
                                            'golddeposit': {'goldore': 0.5}}}},
+         '021': {'name': 'Power!',
+                 'cost': 50,
+                 'description': ['Learn how to build a ',
+                                 'generator that burns wood. '],
+                 'dependencies': ['011'],
+                 'knowledge': {'buildings': ['wood generator']}},
          '100': {'name': 'Bonus Wood',
                  'cost': 50,
                  'description': ['Get 50% more wood from trees.'],
@@ -457,7 +509,13 @@ PERKS = {
                  'description': ['Learn how to ',
                                  'build fishing shacks.'],
                  'dependencies': ['121'],
-                 'knowledge': {'buildings': ['fishing shack']}}
+                 'knowledge': {'buildings': ['fishing shack']}},
+         '132': {'name': 'Electric Mining',
+                 'cost': 50,
+                 'description': ['Learn how to build ',
+                                 'electric miners. '],
+                 'dependencies': ['021','121'],
+                 'knowledge': {'buildings': ['electric miner']}},
          }
 
 gameDisplay = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
@@ -519,7 +577,6 @@ class Player(object):
         self.max_energy = 100
         self.inventory = {'energy': 0,
                           'coins': 0,
-                          'workers': 0,
                           'wood': 0,
                           'stick': 0,
                           'sand': 0,
@@ -693,9 +750,11 @@ class Tile(pygame.Rect):
         self.color = TILE_INFO[type]['color']
         self.surf = pygame.Surface((TILE_WIDTH, TILE_HEIGHT))
         self.resource = None
+        self.resource_dict = None
         self.mine_costs = None
         self.beds = 0
         self.population = 0
+        self.max_power = 0
         self.recruit_cost = 0
         self.produces = None
         self.gathers = None
@@ -734,21 +793,22 @@ class Tile(pygame.Rect):
             res = random.choice(res_list)
             if res != 'none':
                 self.resource = res
-                self.mine_costs = RESOURCES[res]['minecosts']
-                self.symbol = RESOURCES[res]['symbol']
+                self.resource_dict = RESOURCES[res]
+                self.mine_costs = self.resource_dict['minecosts']
+                self.symbol = self.resource_dict['symbol']
                 self.redraw()
                 self.set_tooltip(game)
 
     def begin_build(self, res, game):
         self.resource = res
-        resource_dict = RESOURCES[res]
-        self.mine_costs = resource_dict['minecosts']
-        self.produces = resource_dict.get('produces', None)
-        self.gathers = resource_dict.get('gathers', None)
-        self.frequency = resource_dict.get('frequency', None)
-        self.upkeep = resource_dict.get('upkeep', None)
-        self.work_radius = resource_dict.get('workradius', None)
-        self.symbol = resource_dict['symbol']
+        self.resource_dict = RESOURCES[res]
+        self.mine_costs = self.resource_dict['minecosts']
+        self.produces = self.resource_dict.get('produces', None)
+        self.gathers = self.resource_dict.get('gathers', None)
+        self.frequency = self.resource_dict.get('frequency', None)
+        self.upkeep = self.resource_dict.get('upkeep', None)
+        self.work_radius = self.resource_dict.get('workradius', None)
+        self.symbol = self.resource_dict['symbol']
         for key, value in BUILDABLES[res]['buildcosts'].items():
             player.adjust_inventory(key, -value)
         action = self.finish_build
@@ -759,10 +819,14 @@ class Tile(pygame.Rect):
         self.redraw()
 
     def finish_build(self, game):
-        capacity = RESOURCES[self.resource].get('capacity', 0)
-        self.map.beds += capacity
-        self.beds += capacity
-        self.recruit_cost = RESOURCES[self.resource].get('recruitcost', 0)
+        beds = self.resource_dict.get('beds', 0)
+        self.map.beds += beds
+        self.beds += beds
+        if 'powerproduced' in self.resource_dict:
+            self.max_power = self.resource_dict['powerproduced']
+            self.map.max_power += self.max_power
+
+        self.recruit_cost = self.resource_dict.get('recruitcost', 0)
         if self.produces or self.gathers or self.upkeep:
             action = self.begin_work
             action_dict = {'game': game}
@@ -776,12 +840,18 @@ class Tile(pygame.Rect):
 
     def begin_work(self, game):
         if self.upkeep is None or self.can_work():
-            if self.population > 0 and self.status == 'not producing':
-                self.map.available_workers += self.population
+            if self.status in ['not producing', 'disabled', 'starting production']:
+                if self.population > 0:
+                    self.map.available_workers += self.population
+                if self.max_power > 0:
+                    self.map.available_power += self.max_power
+
             if self.upkeep:
                 for key, value in self.upkeep.items():
                     if key == 'workers':
                         self.map.available_workers -= value
+                    elif key == 'power':
+                        self.map.available_power -= value
                     else:
                         player.adjust_inventory(key, -value)
             action = self.finish_work
@@ -791,6 +861,7 @@ class Tile(pygame.Rect):
         else:
             if self.status == 'producing':
                 self.map.available_workers -= self.population
+                self.map.available_power -= self.max_power
             action = self.begin_work
             action_dict = {'game': game}
             self.timer = Timer(self.frequency, action, action_dict)
@@ -799,8 +870,11 @@ class Tile(pygame.Rect):
         self.set_tooltip(game)
 
     def finish_work(self, game):
-        if self.upkeep and 'workers' in self.upkeep:
-            self.map.available_workers += self.upkeep['workers']
+        if self.upkeep:
+            if 'workers' in self.upkeep:
+                self.map.available_workers += self.upkeep['workers']
+            if 'power' in self.upkeep:
+                self.map.available_power += self.upkeep['power']
         if self.upkeep is None or self.can_work():
             self.status = 'producing'
             if self.produces:
@@ -826,6 +900,8 @@ class Tile(pygame.Rect):
                 for key, value in self.upkeep.items():
                     if key == 'workers':
                         self.map.available_workers -= self.upkeep['workers']
+                    elif key == 'power':
+                        self.map.available_power -= self.upkeep['power']
                     else:
                         player.adjust_inventory(key, -value)
             ticks = self.frequency
@@ -841,6 +917,7 @@ class Tile(pygame.Rect):
         else:
             if self.status == 'producing':
                 self.map.available_workers -= self.population
+                self.map.available_power -= self.max_power
             action = self.begin_work
             action_dict = {'game': game}
             self.timer = Timer(self.frequency, action, action_dict)
@@ -854,6 +931,9 @@ class Tile(pygame.Rect):
             for key, value in self.upkeep.items():
                 if key == 'workers':
                     if self.map.available_workers < value:
+                        will_work = False
+                elif key == 'power':
+                    if self.map.available_power < value:
                         will_work = False
                 else:
                     if player.inventory[key] < value:
@@ -876,7 +956,12 @@ class Tile(pygame.Rect):
         if self.status == 'producing':
             if self.upkeep:
                 self.map.available_workers += self.upkeep.get('workers', 0)
+                self.map.available_power += self.upkeep.get('power', 0)
             self.map.available_workers -= self.population
+            if self.max_power > 0:
+                self.map.max_power -= self.max_power
+                self.map.available_power -= self.max_power
+                self.max_power = 0
 
         if self.population > 0:
             self.map.population -= self.population
@@ -903,8 +988,8 @@ class Tile(pygame.Rect):
             text = '{:,}'.format(value)+' '+get_name(key, value, False)+' added'
             log.add_line(TextLine(text))
         self.resource = None
+        self.resource_dict = None
         self.mine_costs = None
-        self.beds = 0
         self.produces = None
         self.gathers = None
         self.frequency = None
@@ -921,7 +1006,9 @@ class Tile(pygame.Rect):
         if self.status == 'producing':
             if self.upkeep:
                 self.map.available_workers += self.upkeep.get('workers', 0)
+                self.map.available_power += self.upkeep.get('power', 0)
             self.map.available_workers -= self.population
+            self.map.available_power -= self.max_power
 
         self.status = 'disabled'
         self.status_square = None
@@ -930,24 +1017,10 @@ class Tile(pygame.Rect):
         self.set_tooltip(game)
 
     def enable(self, game):
-        if self.upkeep is None or self.can_work():
-            if self.population > 0:
-                self.map.available_workers += self.population
-            if self.upkeep:
-                for key, value in self.upkeep.items():
-                    if key == 'workers':
-                        self.map.available_workers -= value
-                    else:
-                        player.adjust_inventory(key, -value)
-            action = self.finish_work
-            action_dict = {'game': game}
-            self.timer = Timer(self.frequency, action, action_dict)
-            self.status = 'producing'
-        else:
-            action = self.begin_work
-            action_dict = {'game': game}
-            self.timer = Timer(self.frequency, action, action_dict)
-            self.status = 'not producing'
+        action = self.begin_work
+        action_dict = {'game': game}
+        self.timer = Timer(self.frequency, action, action_dict)
+        self.status = 'not producing'
         self.redraw()
         self.set_tooltip(game)
 
@@ -980,6 +1053,7 @@ class Tile(pygame.Rect):
         if self.status is not None:
             text_list.append(TextLine(''))
             text_list.append(TextLine('status: '+self.status))
+        text_list.append(TextLine('max_power: '+str(self.max_power)))
         self.tooltip = ToolTip(text_list, BLACK)
 
     def doclick(self, event, game):
@@ -1118,6 +1192,8 @@ class Map(object):
         self.beds = 0
         self.population = 0
         self.available_workers = 0
+        self.max_power = 0
+        self.available_power = 0
         for y, row in enumerate(tilemap):
             for x, col in enumerate(row):
                 if col != '0':
@@ -1158,9 +1234,14 @@ class Map(object):
         pop_str = '/'.join(('{:,}'.format(self.available_workers),
                             '{:,}'.format(self.population),
                             '{:,}'.format(self.beds)))
+        pow_str = '/'.join(('{:,}'.format(self.available_power),
+                            '{:,}'.format(self.max_power)))
         tool_list = []
         tool_list.append(TextLine('Population: '+pop_str))
         tool_list.append(TextLine('  (avail./total/max)'))
+        tool_list.append(TextLine(''))
+        tool_list.append(TextLine('Power: '+pow_str))
+        tool_list.append(TextLine('  (avail./max)'))
         tool_list.append(TextLine(''))
         tool_list.append(TextLine('contains: '))
         tool_list.append(TextLine(''))
@@ -1852,14 +1933,14 @@ class Game(object):
 
         player.learn_recipe('stick')
         player.learn_building('animal trap')
-        player.learn_building('house')
-        player.learn_building('fishing shack')
         player.adjust_inventory('energy', 100)
         # player.adjust_inventory('wood', 100000)
         # player.adjust_inventory('stick', 100000)
         # player.adjust_inventory('stone', 100000)
         # player.adjust_inventory('ironore', 100000)
         # player.adjust_inventory('goldore', 100000)
+        # player.adjust_inventory('iron', 100000)
+        # player.adjust_inventory('gold', 100000)
         # player.adjust_inventory('food', 100000)
         # player.adjust_inventory('coins', 100000)
 
@@ -1990,8 +2071,10 @@ class Game(object):
         pop_str = '/'.join(('{:,}'.format(self.cur_map.available_workers),
                             '{:,}'.format(self.cur_map.population),
                             '{:,}'.format(self.cur_map.beds)))
-        pop_text = TextLine('Island Population: '+pop_str, font='large')
-        pop_text.tooltip = ToolTip([TextLine('avail./total/max')], BLACK)
+        pow_str = '/'.join(('{:,}'.format(self.cur_map.available_power),
+                            '{:,}'.format(self.cur_map.max_power)))
+        pop_text = TextLine('Island Pop.: '+pop_str+'   Power: '+pow_str, font='large')
+        pop_text.tooltip = ToolTip([TextLine('avail./total/max, avail./max')], BLACK)
         poptextx = gameArea.get_rect(topleft=GAME_OFFSET).centerx
         poptexty = DISPLAY_HEIGHT-(DISPLAY_HEIGHT-GAME_HEIGHT)/4
         pop_text.rect.center = (poptextx, poptexty)
