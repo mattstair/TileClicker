@@ -2270,16 +2270,21 @@ class Game(object):
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if self.cur_page == 'Perks':
                         perk_mouse = get_rel_mouse(mouse, perkArea)
-                        if self.perk_window.has_h_sb:
-                            if self.perk_window.h_sb.collidepoint(perk_mouse):
-                                self.perk_window.moving_h = True
-                                self.perk_window.start_mouse = perk_mouse
-                                self.perk_window.start_x = self.perk_window.h_sb.left
-                        if self.perk_window.has_v_sb:
-                            if self.perk_window.v_sb.collidepoint(perk_mouse):
-                                self.perk_window.moving_v = True
-                                self.perk_window.start_mouse = perk_mouse
-                                self.perk_window.start_y = self.perk_window.v_sb.top
+                        if event.button == 1:
+                            if self.perk_window.has_h_sb:
+                                if self.perk_window.h_sb.collidepoint(perk_mouse):
+                                    self.perk_window.moving_h = True
+                                    self.perk_window.start_mouse = perk_mouse
+                                    self.perk_window.start_x = self.perk_window.h_sb.left
+                            if self.perk_window.has_v_sb:
+                                if self.perk_window.v_sb.collidepoint(perk_mouse):
+                                    self.perk_window.moving_v = True
+                                    self.perk_window.start_mouse = perk_mouse
+                                    self.perk_window.start_y = self.perk_window.v_sb.top
+                        elif event.button == 4:
+                            self.perk_window.scroll(-10)
+                        elif event.button == 5:
+                            self.perk_window.scroll(10)
 
                 if event.type == pygame.MOUSEBUTTONUP:
                     if self.map_view:

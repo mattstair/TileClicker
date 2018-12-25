@@ -53,6 +53,27 @@ class ScrollWindow():
         pygame.draw.rect(self.window_surf, BLACK, self.window_surf.get_rect(), 1)
         surface.blit(self.window_surf, pos)
 
+    def scroll(self, pixel_count, vertical=True):
+        if vertical and self.has_v_sb:
+            if self.full_size[1] < pixel_count - self.view_size[1] + self.ypos < 0:
+                return False
+            else:
+                self.v_sb.top = min(self.view_size[1] - self.v_sb.h,
+                                    max(0, self.v_sb.top + pixel_count))
+                self.ypos = self.v_sb.top / (self.view_size[1] - self.v_sb_size) * (
+                            self.full_size[1] - self.view_size[1])
+                return True
+        elif not vertical and self.has_h_sb:
+            if self.full_size[0] < pixel_count - self.view_size[0] + self.xpos < 0:
+                return False
+            else:
+                self.h_sb.left = min(self.view_size[0]-self.h_sb.w,
+                                     max(0, self.h_sb.left+pixel_count))
+                self.xpos = self.h_sb.left/(self.view_size[0]-self.h_sb_size)*(self.full_size[0]-self.view_size[0])
+                return True
+        else:
+            return False
+
     def do_window(self, surface, pos):
         while True:
             mouse = pygame.mouse.get_pos()
@@ -62,16 +83,21 @@ class ScrollWindow():
                     pygame.quit()
                     quit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if self.has_h_sb:
-                        if self.h_sb.collidepoint(rel_mouse):
-                            self.moving_h = True
-                            self.start_mouse = rel_mouse
-                            self.start_x = self.h_sb.left
-                    if self.has_v_sb:
-                        if self.v_sb.collidepoint(rel_mouse):
-                            self.moving_v = True
-                            self.start_mouse = rel_mouse
-                            self.start_y = self.v_sb.top
+                    if event.button == 1:
+                        if self.has_h_sb:
+                            if self.h_sb.collidepoint(rel_mouse):
+                                self.moving_h = True
+                                self.start_mouse = rel_mouse
+                                self.start_x = self.h_sb.left
+                        if self.has_v_sb:
+                            if self.v_sb.collidepoint(rel_mouse):
+                                self.moving_v = True
+                                self.start_mouse = rel_mouse
+                                self.start_y = self.v_sb.top
+                    elif event.button == 4:
+                        self.scroll(-10)
+                    elif event.button == 5:
+                        self.scroll(10)
                 if event.type == pygame.MOUSEBUTTONUP:
                     self.moving_h = False
                     self.moving_v = False
@@ -93,11 +119,9 @@ def main():
     offset1 = (50, 50)
     offset2 = (25, 25)
 
-    window1 = ScrollWindow((400, 350), (300, 300), WHITE)
-    window1.full_surf.fill(WHITE)
-    window2 = ScrollWindow((400, 150), (200, 200), WHITE)
-    window2.full_surf.fill(WHITE)
-    pygame.draw.rect(window2.full_surf, BLACK, (50, 50, 348, 98), 1)
+    window = ScrollWindow((400, 350), (300, 300), WHITE)
+    window.full_surf.fill(WHITE)
+    pygame.draw.rect(window.full_surf, BLACK, (50, 50, 348, 98), 1)
 
     gameDisplay = pygame.display.set_mode((500, 500))
     gameDisplay.fill(WHITE)
@@ -114,8 +138,7 @@ def main():
             win.ypos = win.v_sb.top/(win.view_size[1]-win.v_sb_size)*(win.full_size[1]-win.view_size[1])
 
     def draw():
-        window2.draw(window1.full_surf, (offset2[0], offset2[1]))
-        window1.draw(gameDisplay, (offset1[0], offset1[1]))
+        window.draw(gameDisplay, (offset1[0], offset1[1]))
 
         pygame.display.flip()
         clock.tick()
@@ -124,41 +147,34 @@ def main():
         gameDisplay.fill(WHITE)
         mouse = pygame.mouse.get_pos()
         rel_mouse = (mouse[0]-offset1[0], mouse[1]-offset1[1])
-        rel_rel_mouse = (rel_mouse[0]-offset2[0]+window1.xpos, rel_mouse[1]-offset2[1]+window1.ypos)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if window1.has_h_sb:
-                    if window1.h_sb.collidepoint(rel_mouse):
-                        window1.moving_h = True
-                        window1.start_mouse = rel_mouse
-                        window1.start_x = window1.h_sb.left
-                if window1.has_v_sb:
-                    if window1.v_sb.collidepoint(rel_mouse):
-                        window1.moving_v = True
-                        window1.start_mouse = rel_mouse
-                        window1.start_y = window1.v_sb.top
-                if window2.has_h_sb:
-                    if window2.h_sb.collidepoint(rel_rel_mouse):
-                        window2.moving_h = True
-                        window2.start_mouse = rel_rel_mouse
-                        window2.start_x = window2.h_sb.left
-                if window2.has_v_sb:
-                    if window2.v_sb.collidepoint(rel_rel_mouse):
-                        window2.moving_v = True
-                        window2.start_mouse = rel_rel_mouse
-                        window2.start_y = window2.v_sb.top
+                if event.button == 1:
+                    if window.has_h_sb:
+                        if window.h_sb.collidepoint(rel_mouse):
+                            window.moving_h = True
+                            window.start_mouse = rel_mouse
+                            window.start_x = window.h_sb.left
+                    if window.has_v_sb:
+                        if window.v_sb.collidepoint(rel_mouse):
+                            window.moving_v = True
+                            window.start_mouse = rel_mouse
+                            window.start_y = window.v_sb.top
+                elif event.button == 4:
+                    if window.window_surf.get_rect().collidepoint(mouse):
+                        window.scroll(-10)
+                elif event.button == 5:
+                    if window.window_surf.get_rect().collidepoint(mouse):
+                        window.scroll(10)
 
             if event.type == pygame.MOUSEBUTTONUP:
-                window1.moving_h = False
-                window1.moving_v = False
-                window2.moving_h = False
-                window2.moving_v = False
+                window.moving_h = False
+                window.moving_v = False
 
-        scroll_window(window1, rel_mouse)
-        scroll_window(window2, rel_rel_mouse)
+        scroll_window(window, rel_mouse)
         draw()
 
 
