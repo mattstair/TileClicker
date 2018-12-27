@@ -145,6 +145,15 @@ RESOURCES = {
                        'confirmdestroy': True,
                        'upkeep': {'food': 1},
                        'frequency': TEN_SEC},
+             'farm': {'symbol': "Fm",
+                      'minetime': TEN_SEC,
+                      'minegives': {'stone': 10,
+                                    'wood': 20},
+                      'minecosts': {'energy': 20},
+                      'confirmdestroy': True,
+                      'produces': {'food': 1},
+                      'upkeep': {'workers': 1},
+                      'frequency': TEN_SEC},
              'fishing shack': {'symbol': "FS",
                                'minetime': 5*ONE_SEC,
                                'minegives': {'stick': 5,
@@ -233,13 +242,20 @@ BUILDABLES = {
                                              'stick': 5,
                                              'energy': 5},
                               'buildtime': TEN_SEC},
-              'house': {'description': ['Increases capacity by 4.',
-                                        'Upkeep: 1 food / 10 sec.'],
+              'house': {'description': ['Increases worker capacity. ',
+                                        'Upkeep: 1 food / 10 sec. '],
                         'canbuild': ['g', 'r', 's', 'i'],
                         'buildcosts': {'stone': 30,
                                        'wood': 40,
                                        'energy': 50},
                         'buildtime': 5*ONE_SEC},
+              'farm': {'description': ['Generates 1 food / 10 sec. ',
+                                       'Needs 1 worker. '],
+                       'canbuild': ['g'],
+                       'buildcosts': {'stone': 30,
+                                      'wood': 40,
+                                      'energy': 50},
+                       'buildtime': 5*ONE_SEC},
               'fishing shack': {'description': ['Automatically collects ',
                                                 'nearby fish.'],
                                 'canbuild': ['g', 'r', 's', 'i'],
@@ -248,7 +264,7 @@ BUILDABLES = {
                                                'energy': 30},
                                 'buildtime': 5*ONE_SEC},
               'forager hut': {'description': ['Automatically collects ',
-                                              'nearby berries and stone.'],
+                                              'nearby berries and rocks.'],
                               'canbuild': ['g', 'r', 's', 'i'],
                               'buildcosts': {'stick': 10,
                                              'wood': 20,
@@ -399,6 +415,10 @@ ITEMS = {
                    'lower': 'house',
                    'plural': 'houses',
                    'plural_i_cap': 'Houses'},
+         'farm': {'i_cap': 'Farm',
+                  'lower': 'farm',
+                  'plural': 'farms',
+                  'plural_i_cap': 'Farms'},
          'fishing shack': {'i_cap': 'Fishing shack',
                            'lower': 'fishing shack',
                            'plural': 'fishing shacks',
@@ -503,20 +523,26 @@ PERKS = {
                                  'build fishing shacks.'],
                  'dependencies': ['101'],
                  'knowledge': {'buildings': ['fishing shack']}},
-         '121': {'name': 'Bonuser Wood',
+         '122': {'name': 'Farm',
+                 'cost': 50,
+                 'description': ['Learn how to ',
+                                 'build farms.'],
+                 'dependencies': ['112'],
+                 'knowledge': {'buildings': ['farm']}},
+         '131': {'name': 'Bonuser Wood',
                  'cost': 100,
                  'description': ['Get 50% more wood from trees.'],
                  'dependencies': ['100'],
                  'bonuses': {'minegives': {'tree': {'wood': 0.5}}}},
-         '131': {'name': 'Faster Wood',
+         '141': {'name': 'Faster Wood',
                  'cost': 50,
                  'description': ['Chop trees 50% faster.'],
                  'dependencies': ['100'],
                  'bonuses': {'minetime': {'tree': 0.5}}},
-         '132': {'name': 'Fasterer Wood',
+         '142': {'name': 'Fasterer Wood',
                  'cost': 100,
                  'description': ['Chop trees 50% faster.'],
-                 'dependencies': ['131'],
+                 'dependencies': ['141'],
                  'bonuses': {'minetime': {'tree': 0.5}}},
          }
 
@@ -1059,7 +1085,6 @@ class Tile(pygame.Rect):
         if self.status is not None:
             text_list.append(TextLine(''))
             text_list.append(TextLine('status: '+self.status))
-        text_list.append(TextLine('max_power: '+str(self.max_power)))
         self.tooltip = ToolTip(text_list, BLACK)
 
     def doclick(self, event, game):
@@ -1944,15 +1969,15 @@ class Game(object):
         player.learn_recipe('stick')
         player.learn_building('animal trap')
         player.adjust_inventory('energy', 100)
-        # player.adjust_inventory('wood', 100000)
-        # player.adjust_inventory('stick', 100000)
-        # player.adjust_inventory('stone', 100000)
-        # player.adjust_inventory('ironore', 100000)
-        # player.adjust_inventory('goldore', 100000)
-        # player.adjust_inventory('iron', 100000)
-        # player.adjust_inventory('gold', 100000)
-        # player.adjust_inventory('food', 100000)
-        # player.adjust_inventory('coins', 100000)
+        player.adjust_inventory('wood', 100000)
+        player.adjust_inventory('stick', 100000)
+        player.adjust_inventory('stone', 100000)
+        player.adjust_inventory('ironore', 100000)
+        player.adjust_inventory('goldore', 100000)
+        player.adjust_inventory('iron', 100000)
+        player.adjust_inventory('gold', 100000)
+        player.adjust_inventory('food', 100000)
+        player.adjust_inventory('coins', 100000)
 
         # dropbuffs = {'res': {'gives':{'thing': 0}...,'minecosts': {'thing': 0}}...}
         self.dropbuffs = {}
@@ -1973,8 +1998,8 @@ class Game(object):
 
         pygame.time.set_timer(GAME_TICK, int(1000//TICKS_PER_SEC))
         self.timers = [
-                       Timer(5*ONE_SEC, player.adjust_inventory, {'item': 'energy', 'amt': 1}, True),
-                       # Timer(ONE_SEC, player.adjust_inventory, {'item': 'energy', 'amt': 100}, True),
+                       # Timer(5*ONE_SEC, player.adjust_inventory, {'item': 'energy', 'amt': 1}, True),
+                       Timer(ONE_SEC, player.adjust_inventory, {'item': 'energy', 'amt': 100}, True),
                        Timer(5*ONE_SEC, all_maps_spawn, {'maps': self.maps, 'game': self}, True),
                        Timer(int(ONE_SEC/20), self.update_map_surf, {}, True),
                        Timer(int(ONE_SEC/10), self.update_map_thumbs, {}, True),
