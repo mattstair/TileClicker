@@ -19,6 +19,8 @@ TEN_SEC = 10*TICKS_PER_SEC
 DISPLAY_WIDTH = 1200
 DISPLAY_HEIGHT = 700
 
+gameDisplay = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
+
 MAP_SIZE = 9
 
 TILE_WIDTH = 50
@@ -89,43 +91,43 @@ TILE_INFO = {
              }
 
 RESOURCES = {
-             'rock': {'symbol': "Rk",
+             'rock': {'image': pygame.image.load('Rocks.png').convert_alpha(),
                       'minetime': 5*ONE_SEC,
                       'minegives': {'stone': 1},
                       'minecosts': {'energy': 5}},
-             'boulder': {'symbol': "Bd",
+             'boulder': {'image': pygame.image.load('Boulder.png').convert_alpha(),
                          'minetime': 10*ONE_SEC,
                          'minegives': {'stone': 5},
                          'minecosts': {'energy': 20}},
-             'irondeposit': {'symbol': "ID",
+             'irondeposit': {'image': pygame.image.load('Iron.png').convert_alpha(),
                              'minetime': 10*ONE_SEC,
                              'minegives': {'ironore': 2},
                              'minecosts': {'energy': 20}},
-             'golddeposit': {'symbol': "GD",
+             'golddeposit': {'image': pygame.image.load('Gold.png').convert_alpha(),
                              'minetime': 10*ONE_SEC,
                              'minegives': {'goldore': 2},
                              'minecosts': {'energy': 20}},
-             'fish': {'symbol': "Fi",
+             'fish': {'image': pygame.image.load('Fish2a.png').convert_alpha(),
                       'minetime': 5*ONE_SEC,
                       'minegives': {'food': 1},
                       'minecosts': {'energy': 5}},
-             'tree': {'symbol': "Tr",
+             'tree': {'image': pygame.image.load('Tree1.png').convert_alpha(),
                       'minetime': 5*ONE_SEC,
                       'minegives': {'wood': 2},
                       'minecosts': {'energy': 5}},
-             'bush': {'symbol': "Bu",
+             'bush': {'image': pygame.image.load('Bush2.png').convert_alpha(),
                       'minetime': 5*ONE_SEC,
                       'minegives': {'food': 1},
                       'minecosts': {'energy': 5}},
-             'sand': {'symbol': "Sd",
+             'sand': {'image': pygame.image.load('Sandpile.png').convert_alpha(),
                       'minetime': ONE_SEC,
                       'minegives': {'sand': 1},
                       'minecosts': {'energy': 5}},
-             'coinpile': {'symbol': "CP",
+             'coinpile': {'image': pygame.image.load('Goldcoins.png').convert_alpha(),
                           'minetime': ONE_SEC,
                           'minegives': {'coins': 20},
                           'minecosts': {'energy': 5}},
-             'loosegem': {'symbol': "Gm",
+             'loosegem': {'image': pygame.image.load('Gem.png').convert_alpha(),
                           'minetime': ONE_SEC,
                           'minegives': {'gem': 1},
                           'minecosts': {'energy': 5}},
@@ -472,60 +474,59 @@ PERKS = {
                  'description': ['Get 50% more wood from trees.'],
                  'dependencies': ['000'],
                  'bonuses': {'minegives': {'tree': {'wood': 0.5}}}},
-         '101': {'name': 'Bonuser Wood',
-                 'cost': 100,
-                 'description': ['Get 50% more wood from trees.'],
-                 'dependencies': ['100'],
-                 'bonuses': {'minegives': {'tree': {'wood': 0.5}}}},
-         '111': {'name': 'Faster Wood',
+         '102': {'name': 'Electric Mining',
                  'cost': 50,
-                 'description': ['Chop trees 50% faster.'],
-                 'dependencies': ['100'],
-                 'bonuses': {'minetime': {'tree': 0.5}}},
-         '112': {'name': 'Fasterer Wood',
-                 'cost': 100,
-                 'description': ['Chop trees 50% faster.'],
-                 'dependencies': ['111'],
-                 'bonuses': {'minetime': {'tree': 0.5}}},
-         '121': {'name': 'People!',
+                 'description': ['Learn how to build ',
+                                 'electric miners. '],
+                 'dependencies': ['021', '101'],
+                 'knowledge': {'buildings': ['electric miner']}},
+         '101': {'name': 'People!',
                  'cost': 50,
                  'description': ['Learn how to build houses. '],
                  'dependencies': ['100'],
                  'knowledge': {'buildings': ['house']}},
-         '122': {'name': 'Forager Hut',
+         '112': {'name': 'Forager Hut',
                  'cost': 50,
                  'description': ['Learn how to ',
                                  'build forager huts.'],
-                 'dependencies': ['121'],
+                 'dependencies': ['101'],
                  'knowledge': {'buildings': ['forager hut']}},
-         '123': {'name': 'Lumberjack Hut',
+         '113': {'name': 'Lumberjack Hut',
                  'cost': 50,
                  'description': ['Learn how to ',
                                  'build lumberjack huts.'],
-                 'dependencies': ['121'],
+                 'dependencies': ['101'],
                  'knowledge': {'buildings': ['lumberjack hut']}},
-         '124': {'name': 'Fishing Shack',
+         '114': {'name': 'Fishing Shack',
                  'cost': 50,
                  'description': ['Learn how to ',
                                  'build fishing shacks.'],
-                 'dependencies': ['121'],
+                 'dependencies': ['101'],
                  'knowledge': {'buildings': ['fishing shack']}},
-         '132': {'name': 'Electric Mining',
+         '121': {'name': 'Bonuser Wood',
+                 'cost': 100,
+                 'description': ['Get 50% more wood from trees.'],
+                 'dependencies': ['100'],
+                 'bonuses': {'minegives': {'tree': {'wood': 0.5}}}},
+         '131': {'name': 'Faster Wood',
                  'cost': 50,
-                 'description': ['Learn how to build ',
-                                 'electric miners. '],
-                 'dependencies': ['021','121'],
-                 'knowledge': {'buildings': ['electric miner']}},
+                 'description': ['Chop trees 50% faster.'],
+                 'dependencies': ['100'],
+                 'bonuses': {'minetime': {'tree': 0.5}}},
+         '132': {'name': 'Fasterer Wood',
+                 'cost': 100,
+                 'description': ['Chop trees 50% faster.'],
+                 'dependencies': ['131'],
+                 'bonuses': {'minetime': {'tree': 0.5}}},
          }
 
-gameDisplay = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
 GAME_AREA_RECT = (GAME_OFFSETS['x'], GAME_OFFSETS['y'], GAME_WIDTH, GAME_HEIGHT)
 gameArea = gameDisplay.subsurface(GAME_AREA_RECT)
 MAP_OFFSET = ((GAME_WIDTH - (MAP_SIZE*TILE_WIDTH)) / 2,
               (GAME_HEIGHT - (MAP_SIZE*TILE_HEIGHT)) / 2)
 maprect = (MAP_OFFSET[0], MAP_OFFSET[1], (MAP_SIZE*TILE_WIDTH), (MAP_SIZE*TILE_HEIGHT))
 mapArea = gameArea.subsurface(maprect)
-perkrect = (700, 100, 450, 450)
+perkrect = (700, 75, 450, 450)
 perkArea = gameDisplay.subsurface(perkrect)
 
 mapviewbutton = pygame.Surface((40, 40))
@@ -764,6 +765,7 @@ class Tile(pygame.Rect):
         self.text_rect = None
         self.text_surf = None
         self.symbol = None
+        self.image = None
         self.status = None
         self.status_square = None
         self.timer = None
@@ -795,7 +797,10 @@ class Tile(pygame.Rect):
                 self.resource = res
                 self.resource_dict = RESOURCES[res]
                 self.mine_costs = self.resource_dict['minecosts']
-                self.symbol = self.resource_dict['symbol']
+                if 'symbol' in self.resource_dict:
+                    self.symbol = self.resource_dict['symbol']
+                else:
+                    self.image = self.resource_dict['image']
                 self.redraw()
                 self.set_tooltip(game)
 
@@ -808,7 +813,10 @@ class Tile(pygame.Rect):
         self.frequency = self.resource_dict.get('frequency', None)
         self.upkeep = self.resource_dict.get('upkeep', None)
         self.work_radius = self.resource_dict.get('workradius', None)
-        self.symbol = self.resource_dict['symbol']
+        if 'symbol' in self.resource_dict:
+            self.symbol = self.resource_dict['symbol']
+        else:
+            self.image = self.resource_dict['image']
         for key, value in BUILDABLES[res]['buildcosts'].items():
             player.adjust_inventory(key, -value)
         action = self.finish_build
@@ -996,6 +1004,7 @@ class Tile(pygame.Rect):
         self.upkeep = None
         self.work_radius = None
         self.symbol = None
+        self.image = None
         self.status = None
         self.status_square = None
         self.timer = None
@@ -1168,11 +1177,13 @@ class Tile(pygame.Rect):
         if self.status == 'disabled':
             bg_color = RED
         pygame.draw.rect(self.surf, bg_color, (self.surf.get_rect()))
-        pygame.draw.rect(self.surf, BLACK, self.surf.get_rect(), 1)
         if self.resource:
-            self.text_surf, self.text_rect = text_objects(self.symbol, FONTS['45'])
-            self.text_rect.center = self.surf.get_rect().center
-            self.surf.blit(self.text_surf, self.text_rect)
+            if self.symbol:
+                self.text_surf, self.text_rect = text_objects(self.symbol, FONTS['45'])
+                self.text_rect.center = self.surf.get_rect().center
+                self.surf.blit(self.text_surf, self.text_rect)
+            elif self.image:
+                self.surf.blit(self.image, (0, 0))
             if self.beds == 4:
                 pygame.draw.circle(self.surf, BLACK, (8, TILE_HEIGHT-7), 5, min(1, max(0, 1-self.population)))
                 pygame.draw.circle(self.surf, BLACK, (19, TILE_HEIGHT-7), 5, min(1, max(0, 2-self.population)))
@@ -1180,6 +1191,7 @@ class Tile(pygame.Rect):
                 pygame.draw.circle(self.surf, BLACK, (42, TILE_HEIGHT-7), 5, min(1, max(0, 4-self.population)))
         if self.status_square is not None:
             self.surf.blit(self.status_square.surf, self.surf.get_rect())
+        pygame.draw.rect(self.surf, BLACK, self.surf.get_rect(), 1)
 
     def draw(self, surface):
         surface.blit(self.surf, self.get_rect())
@@ -1496,7 +1508,8 @@ def draw_line(surf, pos1, pos2):
 
 def page_select_surf(pages, cur_page, text_surfaces, page_select_rect):
     page_index = pages.index(cur_page)
-    pages_surf = pygame.Surface((page_select_rect.w + 45, page_select_rect.h + 7))
+    w_extra = DISPLAY_WIDTH-GAME_OFFSET[0]-GAME_WIDTH-10-page_select_rect.w-10
+    pages_surf = pygame.Surface((page_select_rect.w + w_extra, page_select_rect.h + 7))
     pages_surf.fill(WHITE)
     for txtsurf in text_surfaces:
         pages_surf.blit(txtsurf.surf, (txtsurf.rect.x, txtsurf.rect.y + 4))
@@ -1517,7 +1530,7 @@ def page_select_surf(pages, cur_page, text_surfaces, page_select_rect):
     for i in range(len(pages)):
         if page_index == i:
             draw_line(pages_surf, (t[0].rect.left - 45, btm), (t[i].rect.left - 30, btm))
-            draw_line(pages_surf, (t[i].rect.right + 30, btm), (t[last].rect.right + 45, btm))
+            draw_line(pages_surf, (t[i].rect.right + 30, btm), (t[last].rect.right + w_extra, btm))
 
     for i in range(last):
         if page_index == i + 1:
@@ -1805,17 +1818,17 @@ def get_sell_buttons(game):
             if value > 0:
                 button1 = Button(11, height-1, '1')
                 button1.tags.append(key)
-                button1.rect = button1.surf.get_rect(topleft=(GAME_WIDTH + 500, i))
+                button1.rect = button1.surf.get_rect(topleft=(GAME_WIDTH + 475, i))
                 sell_buttons.append(button1)
             if value > 9:
                 button2 = Button(21, height-1, '10')
                 button2.tags.append(key)
-                button2.rect = button2.surf.get_rect(topleft=(GAME_WIDTH + 521, i))
+                button2.rect = button2.surf.get_rect(topleft=(GAME_WIDTH + 496, i))
                 sell_buttons.append(button2)
             if value > 99:
                 button3 = Button(31, height-1, '100')
                 button3.tags.append(key)
-                button3.rect = button3.surf.get_rect(topleft=(GAME_WIDTH + 552, i))
+                button3.rect = button3.surf.get_rect(topleft=(GAME_WIDTH + 527, i))
                 sell_buttons.append(button3)
             i += height
     return sell_buttons
@@ -2120,7 +2133,15 @@ class Game(object):
 
         pygame.draw.rect(gameDisplay, BLACK, GAME_AREA_RECT, 1)
         pygame.draw.rect(gameDisplay, BLACK, gameDisplay.get_rect(), 1)
-        gameDisplay.blit(self.page_select_surf, (GAME_WIDTH + 50, 15))
+        gameDisplay.blit(self.page_select_surf, (GAME_WIDTH + 50 + 10,
+                                                 GAME_OFFSET[1] - self.page_select_surf.get_rect().h))
+        y_start = GAME_OFFSET[1]
+        pygame.draw.line(gameDisplay, BLACK, (GAME_WIDTH + 50 + 10, y_start),
+                         (GAME_WIDTH + 50 + 10, y_start + 500), 2)
+        pygame.draw.line(gameDisplay, BLACK, (GAME_WIDTH + 50 + 10, y_start + 500),
+                         (DISPLAY_WIDTH - 10, y_start + 500), 2)
+        pygame.draw.line(gameDisplay, BLACK, (DISPLAY_WIDTH - 10, y_start + 500),
+                         (DISPLAY_WIDTH - 10, y_start - 2), 2)
         gameDisplay.blit(self.energy_text.surf, self.energy_text)
         gameDisplay.blit(coins_text.surf, coins_text)
         self.energy_bar.draw()
@@ -2134,19 +2155,19 @@ class Game(object):
             header_text1 = FONTS['medium'].render('Number', True, BLACK)
             header_text2 = FONTS['medium'].render('Sell value (All)', True, BLACK)
             header_text3 = FONTS['medium'].render('Sell', True, BLACK)
-            gameDisplay.blit(header_text1, (GAME_WIDTH + 300 - header_text1.get_width(), 75))
-            gameDisplay.blit(header_text2, (GAME_WIDTH + 490 - header_text2.get_width(), 75))
-            gameDisplay.blit(header_text3, (GAME_WIDTH + 500, 75))
+            gameDisplay.blit(header_text1, (GAME_WIDTH + 275 - header_text1.get_width(), 75))
+            gameDisplay.blit(header_text2, (GAME_WIDTH + 440 - header_text2.get_width(), 75))
+            gameDisplay.blit(header_text3, (GAME_WIDTH + 475, 75))
             i = 0
             text_surfs = {}
             for key, value in player.inventory.items():
                 if key not in self.exclude and key in player.known_items:
                     tmptext1 = FONTS['medium'].render(ITEMS[key]['i_cap']+':', True, BLACK)
                     tmptext2 = FONTS['medium'].render('{:,}'.format(value), True, BLACK)
-                    tmptext2x = GAME_WIDTH + 300 - tmptext2.get_width()
+                    tmptext2x = GAME_WIDTH + 275 - tmptext2.get_width()
                     tmpstr3 = '{:,}'.format(get_sell_val(key))+' ('+'{:,}'.format(value*get_sell_val(key))+')'
                     tmptext3 = FONTS['medium'].render(tmpstr3, True, BLACK)
-                    tmptext3x = GAME_WIDTH + 490 - tmptext3.get_width()
+                    tmptext3x = GAME_WIDTH + 440 - tmptext3.get_width()
                     gameDisplay.blit(tmptext1, (GAME_WIDTH + 100, 100 + i))
                     gameDisplay.blit(tmptext2, (tmptext2x, 100 + i))
                     gameDisplay.blit(tmptext3, (tmptext3x, 100 + i))
@@ -2181,19 +2202,19 @@ class Game(object):
                                                                                    CHART_HEIGHT+50)))
 
                     zero_secs = FONTS['medium'].render('0', True, BLACK)
-                    mouseover_chart.blit(zero_secs, zero_secs.get_rect(center=(chart_offset, CHART_HEIGHT+30)))
+                    mouseover_chart.blit(zero_secs, zero_secs.get_rect(center=(chart_offset+CHART_WIDTH,
+                                                                               CHART_HEIGHT+33)))
                     thirty_secs = FONTS['medium'].render('30', True, BLACK)
                     mouseover_chart.blit(thirty_secs, thirty_secs.get_rect(center=(chart_offset+CHART_WIDTH/2,
-                                                                                   CHART_HEIGHT+30)))
+                                                                                   CHART_HEIGHT+33)))
                     sixty_secs = FONTS['medium'].render('60', True, BLACK)
-                    mouseover_chart.blit(sixty_secs, sixty_secs.get_rect(center=(chart_offset+CHART_WIDTH,
-                                                                                 CHART_HEIGHT+30)))
+                    mouseover_chart.blit(sixty_secs, sixty_secs.get_rect(center=(chart_offset, CHART_HEIGHT+33)))
 
-                    mouseover_chart.blit(max_text, max_text.get_rect(midright=(chart_offset-3, 20)))
+                    mouseover_chart.blit(max_text, max_text.get_rect(midright=(chart_offset-5, 20)))
                     mid_text = FONTS['medium'].render('{:,}'.format(int((ymax+ymin)/2)), True, BLACK)
-                    mouseover_chart.blit(mid_text, mid_text.get_rect(midright=(chart_offset-3, 20+CHART_HEIGHT/2)))
+                    mouseover_chart.blit(mid_text, mid_text.get_rect(midright=(chart_offset-5, 20+CHART_HEIGHT/2)))
                     min_text = FONTS['medium'].render('{:,}'.format(ymin), True, BLACK)
-                    mouseover_chart.blit(min_text, min_text.get_rect(midright=(chart_offset-3, 20+CHART_HEIGHT)))
+                    mouseover_chart.blit(min_text, min_text.get_rect(midright=(chart_offset-5, 20+CHART_HEIGHT)))
 
                     pygame.draw.rect(chart_area, BLACK, chart_area.get_rect(), 1)
                     prev_point = None
@@ -2201,10 +2222,10 @@ class Game(object):
                         if val is not None:
                             if prev_point is not None:
                                 pygame.draw.line(chart_area, GREEN, prev_point,
-                                                 (i*int(CHART_WIDTH/60),
-                                                  int(CHART_HEIGHT-CHART_HEIGHT*((val-ymin)/(ymax-ymin)))), 2)
-                            prev_point = (i*int(CHART_WIDTH/60),
-                                          int(CHART_HEIGHT-CHART_HEIGHT*((val-ymin)/(ymax-ymin))))
+                                                 (i*int(CHART_WIDTH/60)+2,
+                                                  int(CHART_HEIGHT-CHART_HEIGHT*((val-ymin)/(ymax-ymin)))-3), 2)
+                            prev_point = (i*int(CHART_WIDTH/60)+2,
+                                          int(CHART_HEIGHT-CHART_HEIGHT*((val-ymin)/(ymax-ymin)))-3)
                     chart_pos = (self.mouse[0]+20, self.mouse[1]+20)
                     gameDisplay.blit(mouseover_chart, chart_pos)
 
@@ -2344,7 +2365,8 @@ class Game(object):
                                     perk.do_click(self)
 
                     for i, page in enumerate(self.page_surfaces):
-                        pagemouse = (mouse[0] - GAME_WIDTH - 50, mouse[1] - 17)
+                        pagemouse = (mouse[0] - GAME_WIDTH - 60,
+                                     mouse[1] - GAME_OFFSET[1] + self.page_select_surf.get_rect().h)
                         if page.check_mouseover(pagemouse):
                             self.cur_page = self.pages[i]
                             self.page_select_surf = self.page_select_surfs[self.cur_page]
