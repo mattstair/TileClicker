@@ -3,24 +3,24 @@ import pygame
 
 class StatusBar(pygame.Rect):
     def __init__(self, display, x, y, w, h, l_color, r_color, o_color,
-                 max=100, val=0):
+                 maximum=100, val=0):
         super().__init__(x, y, w, h)
         self.display = display
         self.l_color = l_color
         self.r_color = r_color
         self.o_color = o_color
-        self.max = max
+        self.maximum = maximum
         self.val = val
 
     def incr(self, inc):
-        if 0 < self.val < self.max:
-            self.val = max(0, min(self.max, self.val + inc))
+        if 0 < self.val < self.maximum:
+            self.val = max(0, min(self.maximum, self.val + inc))
 
     def get_rect(self):
         return [self.x, self.y, self.w, self.h]
 
     def draw(self):
-        position = (self.val/self.max * self.w)
+        position = (self.val / self.maximum * self.w)
         if position == 0:
             pygame.draw.rect(self.display, self.r_color, self.get_rect())
             pygame.draw.rect(self.display, self.o_color, self.get_rect(), 1)

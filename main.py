@@ -441,8 +441,8 @@ PERKS = {
                  'description': ['Get 100% more stone from ',
                                  'rocks and boulders'],
                  'dependencies': ['000'],
-                 'bonuses': {'minegives': {'rock': {'stone': 1.0}},
-                             'minegives': {'boulder': {'stone': 1.0}}}},
+                 'bonuses': {'minegives': {'rock': {'stone': 1.0},
+                                           'boulder': {'stone': 1.0}}}},
          '011': {'name': 'Melting',
                  'cost': 50,
                  'description': ['Learn how to make glass ',
@@ -457,8 +457,8 @@ PERKS = {
                  'knowledge': {'buildings': ['miner']}},
          '013': {'name': 'Better mining',
                  'cost': 100,
-                 'description': ['Get 50% more stone and ',
-                                 'ore when mining.'],
+                 'description': ['Get 50% more stone from ',
+                                 'boulders and ore when mining.'],
                  'dependencies': ['012'],
                  'bonuses': {'minegives': {'boulder': {'stone': 0.5},
                                            'irondeposit': {'ironore': 0.5},
@@ -631,9 +631,6 @@ class Player(object):
         if item == 'energy':
             new_amt = min(self.max_energy, self.inventory['energy'] + amt)
             self.inventory['energy'] = new_amt
-        elif item == 'workers':
-            new_amt = min(self.max_population, self.inventory['workers'] + amt)
-            self.inventory['workers'] = new_amt
         else:
             if item not in self.known_items:
                 self.known_items.append(item)
@@ -1084,9 +1081,9 @@ class Tile(pygame.Rect):
         elif event.button == 3:
             if self.resource and self.resource in BUILDABLES:
                 menu_items = []
+                can_recruit = False
+                can_destroy = False
                 if self.resource == 'house':
-                    can_recruit = False
-                    can_destroy = False
                     if (self.beds > self.population
                         and RESOURCES[self.resource].get('recruitcost', 0) <= player.inventory['coins']):
                         color1 = BLACK
@@ -1570,7 +1567,7 @@ def do_crafting_popup(item):
         mouse = pygame.mouse.get_pos()
         relmouse = get_rel_mouse(mouse, menu)
         craft_portion = min(max(0, (relmouse[0] - 50)/350), 1)
-        craft_num = int(round(bar.max*craft_portion, 0))
+        craft_num = int(round(bar.maximum * craft_portion, 0))
         bar.val = craft_num
         bar.draw()
         craft_result_num = craft_num*player.recipes[item]['gives'][item]
@@ -1640,7 +1637,7 @@ def do_build_popup(item, cur_map, game):
         can_build = False
         if 0 <= xgrid < MAP_SIZE and 0 <= ygrid < MAP_SIZE:
             tile = cur_map.tiles[ygrid][xgrid]
-            if ((tile.type in player.buildables[item]['canbuild'] and tile.resource is None)):
+            if tile.type in player.buildables[item]['canbuild'] and tile.resource is None:
                 target_tile.fill(GREEN)
                 can_build = True
             else:
@@ -1692,7 +1689,7 @@ def do_using_popup(item):
         mouse = pygame.mouse.get_pos()
         relmouse = get_rel_mouse(mouse, menu)
         use_portion = min(max(0, (relmouse[0] - 50)/350), 1)
-        use_number = int(round(bar.max*use_portion, 0))
+        use_number = int(round(bar.maximum * use_portion, 0))
         bar.val = use_number
         bar.draw()
         menu.blit(FONTS['medium'].render('Use: '+'{:,}'.format(use_number)+' '+get_name(item, use_number, False),
@@ -1889,7 +1886,7 @@ class Game(object):
 
         self.energy_bar_flash = False
         self.energy_bar = StatusBar(gameDisplay, 200, 15, 100, 20, GREEN, WHITE, BLACK)
-        self.energy_bar.max = player.max_energy
+        self.energy_bar.maximum = player.max_energy
         self.energy_bar.val = player.inventory['energy']
         self.energy_text = TextLine('Energy:', font='large')
         self.energy_text.rect.x, self.energy_text.rect.y = 50, 6
