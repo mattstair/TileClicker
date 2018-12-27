@@ -234,68 +234,58 @@ ALL_RECIPES = {
                }
 
 BUILDABLES = {
-              'animal trap': {'description': ['Produces 4 food.',
-                                              'Consumed on use.'],
+              'animal trap': {'description': 'Produces 4 food. Consumed on use.',
                               'canbuild': ['g', 'w'],
                               'buildcosts': {'food': 1,
                                              'stone': 1,
                                              'stick': 5,
                                              'energy': 5},
                               'buildtime': TEN_SEC},
-              'house': {'description': ['Increases worker capacity. ',
-                                        'Upkeep: 1 food / 10 sec. '],
+              'house': {'description': 'Increases worker capacity. Upkeep: 1 food / 10 sec. ',
                         'canbuild': ['g', 'r', 's', 'i'],
                         'buildcosts': {'stone': 30,
                                        'wood': 40,
                                        'energy': 50},
                         'buildtime': 5*ONE_SEC},
-              'farm': {'description': ['Generates 1 food / 10 sec. ',
-                                       'Needs 1 worker. '],
+              'farm': {'description': 'Generates 1 food / 10 sec. Needs 1 worker. ',
                        'canbuild': ['g'],
                        'buildcosts': {'stone': 30,
                                       'wood': 40,
                                       'energy': 50},
                        'buildtime': 5*ONE_SEC},
-              'fishing shack': {'description': ['Automatically collects ',
-                                                'nearby fish.'],
+              'fishing shack': {'description':'Automatically collects nearby fish.',
                                 'canbuild': ['g', 'r', 's', 'i'],
                                 'buildcosts': {'stick': 10,
                                                'wood': 20,
                                                'energy': 30},
                                 'buildtime': 5*ONE_SEC},
-              'forager hut': {'description': ['Automatically collects ',
-                                              'nearby berries and rocks.'],
+              'forager hut': {'description': 'Automatically collects nearby berries and rocks.',
                               'canbuild': ['g', 'r', 's', 'i'],
                               'buildcosts': {'stick': 10,
                                              'wood': 20,
                                              'energy': 30},
                               'buildtime': 5*ONE_SEC},
-              'lumberjack hut': {'description': ['Automatically chops ',
-                                                 'down trees.'],
+              'lumberjack hut': {'description': 'Automatically chops down trees.',
                                  'canbuild': ['g', 'r', 's', 'i'],
                                  'buildcosts': {'stone': 30,
                                                 'wood': 40,
                                                 'energy': 30},
                                  'buildtime': 5 * ONE_SEC},
-              'miner': {'description': ['Automatically mines ',
-                                        'boulders and ores.'],
+              'miner': {'description': 'Automatically mines boulders and ores.',
                         'canbuild': ['g', 'r', 's', 'i'],
                         'buildcosts': {'iron': 10,
                                        'stone': 20,
                                        'wood': 20,
                                        'energy': 30},
                         'buildtime': 5 * ONE_SEC},
-              'wood generator': {'description': ['Consumes 1 wood and , ',
-                                                 'generates 2 power. '],
+              'wood generator': {'description': 'Consumes 1 wood and, generates 2 power. ',
                                  'canbuild': ['g', 'r', 's', 'i'],
                                  'buildcosts': {'iron': 10,
                                                 'stone': 20,
                                                 'wood': 20,
                                                 'energy': 30},
                                  'buildtime': 5 * ONE_SEC},
-              'electric miner': {'description': ['Automatically mines ',
-                                                 'boulders and ores. ',
-                                                 'Uses 1 power. '],
+              'electric miner': {'description': 'Automatically mines boulders and ores. Uses 1 power. ',
                                  'canbuild': ['g', 'r', 's', 'i'],
                                  'buildcosts': {'iron': 10,
                                                 'stone': 20,
@@ -452,96 +442,85 @@ ITEMS = {
 PERKS = {
          '000': {'name': 'Bonus Stone',
                  'cost': 50,
-                 'description': ['Get 50% more stone ',
-                                 'from boulders'],
+                 'description': 'Get 50% more stone from boulders',
                  'dependencies': None,
                  'bonuses': {'minegives': {'boulder': {'stone': 0.5}}}},
          '001': {'name': 'Bonuser Stone',
                  'cost': 100,
-                 'description': ['Get 100% more stone from ',
-                                 'rocks and boulders'],
+                 'description': 'Get 100% more stone from rocks and boulders',
                  'dependencies': ['000'],
                  'bonuses': {'minegives': {'rock': {'stone': 1.0},
                                            'boulder': {'stone': 1.0}}}},
          '011': {'name': 'Melting',
                  'cost': 50,
-                 'description': ['Learn how to make glass ',
-                                 'and how to smelt iron and gold.'],
+                 'description': 'Learn how to make glass and how to smelt iron and gold.',
                  'dependencies': ['000'],
                  'knowledge': {'recipes': ['glass', 'iron', 'gold']}},
          '012': {'name': 'Mining',
                  'cost': 50,
-                 'description': ['Learn how to build miners ',
-                                 'who can mine Boulders and ore.'],
+                 'description': 'Learn how to build miners who can mine Boulders and ore.',
                  'dependencies': ['011'],
                  'knowledge': {'buildings': ['miner']}},
          '013': {'name': 'Better mining',
                  'cost': 100,
-                 'description': ['Get 50% more stone from ',
-                                 'boulders and ore when mining.'],
+                 'description': 'Get 50% more stone from boulders and ore when mining.',
                  'dependencies': ['012'],
                  'bonuses': {'minegives': {'boulder': {'stone': 0.5},
                                            'irondeposit': {'ironore': 0.5},
                                            'golddeposit': {'goldore': 0.5}}}},
          '021': {'name': 'Power!',
                  'cost': 50,
-                 'description': ['Learn how to build a ',
-                                 'generator that burns wood. '],
+                 'description': 'Learn how to build a generator that burns wood. ',
                  'dependencies': ['011'],
                  'knowledge': {'buildings': ['wood generator']}},
          '100': {'name': 'Bonus Wood',
                  'cost': 50,
-                 'description': ['Get 50% more wood from trees.'],
+                 'description': 'Get 50% more wood from trees.',
                  'dependencies': ['000'],
                  'bonuses': {'minegives': {'tree': {'wood': 0.5}}}},
          '102': {'name': 'Electric Mining',
                  'cost': 50,
-                 'description': ['Learn how to build ',
-                                 'electric miners. '],
+                 'description': 'Learn how to build electric miners. ',
                  'dependencies': ['021', '101'],
                  'knowledge': {'buildings': ['electric miner']}},
          '101': {'name': 'People!',
                  'cost': 50,
-                 'description': ['Learn how to build houses. '],
+                 'description': 'Learn how to build houses. ',
                  'dependencies': ['100'],
                  'knowledge': {'buildings': ['house']}},
          '112': {'name': 'Forager Hut',
                  'cost': 50,
-                 'description': ['Learn how to ',
-                                 'build forager huts.'],
+                 'description': 'Learn how to build forager huts.',
                  'dependencies': ['101'],
                  'knowledge': {'buildings': ['forager hut']}},
          '113': {'name': 'Lumberjack Hut',
                  'cost': 50,
-                 'description': ['Learn how to ',
-                                 'build lumberjack huts.'],
+                 'description': 'Learn how to build lumberjack huts.',
                  'dependencies': ['101'],
                  'knowledge': {'buildings': ['lumberjack hut']}},
          '114': {'name': 'Fishing Shack',
                  'cost': 50,
-                 'description': ['Learn how to ',
-                                 'build fishing shacks.'],
+                 'description': 'Learn how to build fishing shacks.',
                  'dependencies': ['101'],
                  'knowledge': {'buildings': ['fishing shack']}},
          '122': {'name': 'Farm',
                  'cost': 50,
-                 'description': ['Learn how to ',
-                                 'build farms.'],
+                 'description': 'Learn how to build farms.',
                  'dependencies': ['112'],
                  'knowledge': {'buildings': ['farm']}},
          '131': {'name': 'Bonuser Wood',
                  'cost': 100,
-                 'description': ['Get 50% more wood from trees.'],
+                 'description': 'Get 50% more wood from trees.',
                  'dependencies': ['100'],
                  'bonuses': {'minegives': {'tree': {'wood': 0.5}}}},
          '141': {'name': 'Faster Wood',
                  'cost': 50,
-                 'description': ['Chop trees 50% faster.'],
+                 'description': 'Chop trees 50% faster.',
                  'dependencies': ['100'],
                  'bonuses': {'minetime': {'tree': 0.5}}},
          '142': {'name': 'Fasterer Wood',
                  'cost': 100,
-                 'description': ['Chop trees 50% faster.'],
+                 'description': 'Chop trees 50% faster.',
                  'dependencies': ['141'],
                  'bonuses': {'minetime': {'tree': 0.5}}},
          }
@@ -746,13 +725,14 @@ class ToolTip(pygame.Surface):
         for line in text_list:
             self.w = max(self.w, line.rect.w+2*2)  # pixel buffer of 2 on each side
             self.h += line.rect.h
+        self.h += 2
         super().__init__((self.w, self.h))
         self.fill(WHITE)
         self.set_alpha(220)
         self.make()
 
     def make(self):
-        y = 0
+        y = 2
         for line in self.text_list:
             self.blit(line.surf, (2, y, line.rect.w, line.rect.h))  # pixel buffer of 2
             y += line.rect.h
@@ -1408,16 +1388,23 @@ class Perk(object):
             bold_rect.w -= 1
             bold_rect.h -= 1
             pygame.draw.rect(self.surf, BLACK, bold_rect, 2)
-            text_surface = FONTS['20'].render(self.name, True, BLACK)
+            color = BLACK
         elif self.status == 'available':
             pygame.draw.rect(self.surf, BLACK, self.surf.get_rect(), 1)
-            text_surface = FONTS['20'].render(self.name, True, BLACK)
+            color = BLACK
         else:
             pygame.draw.rect(self.surf, GREY, self.surf.get_rect(), 1)
-            text_surface = FONTS['20'].render(self.name, True, GREY)
-        text_rect = text_surface.get_rect(center=self.surf.get_rect().center)
-        text_rect.bottom = (PERK_HEIGHT/2)-2
-        self.surf.blit(text_surface, text_rect)
+            color = GREY
+        textlines = get_textlines(self.name, PERK_WIDTH - 10, True, color, '20')
+        full_text_rect = pygame.Rect(0, 0, 1, 1)
+        for textline in textlines:
+            full_text_rect = full_text_rect.union(textline)
+        y_adj = (PERK_HEIGHT-full_text_rect.h)/2
+        x_adj = (PERK_WIDTH-full_text_rect.w)/2
+        for textline in textlines:
+            textline.rect.top += y_adj
+            textline.rect.left += x_adj
+            self.surf.blit(textline.surf, textline.rect)
 
     def draw(self, surface):
         surface.blit(self.surf, self.rect)
@@ -1425,8 +1412,9 @@ class Perk(object):
     def set_tooltip(self, game):
         self.tooltip = None
         text_list = []
-        for text in self.description:
-            text_list.append(TextLine(text))
+        description_lines = get_textlines(self.description, 200)
+        for text in description_lines:
+            text_list.append(TextLine(text.string))
         if self.status != 'purchased':
             text_list.append(TextLine(''))
             text_list.append(TextLine('Costs:'))
@@ -1445,6 +1433,41 @@ class Perk(object):
         text_list.append(TextLine(self.status, text_color))
 
         self.tooltip = ToolTip(text_list, BLACK)
+
+
+def get_textlines(string, margin, centered=True, color=BLACK, font='medium', bg=None):
+    words = string.split()
+    textlines = []
+    cur_string = ''
+    max_width = 0
+    for word in words:
+        if len(cur_string) == 0:
+            cur_string = cur_string + word
+            temp_string = cur_string
+        else:
+            temp_string = cur_string + ' ' + word
+        temp_line = TextLine(temp_string, BLACK, font)
+
+        if temp_line.rect.w > margin:
+            textline = TextLine(cur_string, color, font, bg, cur_string)
+            textlines.append(textline)
+            max_width = max(max_width, textline.rect.w)
+            cur_string = word
+        else:
+            cur_string = temp_string
+    else:
+        textline = TextLine(cur_string, color, font, bg, cur_string)
+        textlines.append(textline)
+        max_width = max(max_width, textline.rect.w)
+
+    cur_y = 0
+    for textline in textlines:
+        if centered:
+            textline.rect.centerx = max_width//2
+        textline.rect.top = cur_y
+        cur_y += textline.rect.h
+
+    return textlines
 
 
 def get_name(item, num, cap):
@@ -1779,8 +1802,9 @@ def get_build_surfs():
         textline = TextLine(ITEMS[key]['i_cap'], color)
         tooltip_textlines = []
         tooltip_textlines.append(TextLine('Description:'))
-        for desc_line in player.buildables[key]['description']:
-            tooltip_textlines.append(TextLine('  '+desc_line))
+        description_lines = get_textlines(player.buildables[key]['description'], 200)
+        for desc_line in description_lines:
+            tooltip_textlines.append(TextLine('  '+desc_line.string))
         tooltip_textlines.append(TextLine(''))
         tooltip_textlines.append(TextLine('Costs:'))
         for thing, amt in player.buildables[key]['buildcosts'].items():
@@ -1892,14 +1916,6 @@ def draw_radius_surface(pos, radius):
         gameDisplay.blit(radius_surface, blit_pos)
 
 
-one_of_four = pygame.Surface((45, 10))
-one_of_four.fill(WHITE)
-pygame.draw.circle(one_of_four, BLACK, (9, 5), 4, 0)
-pygame.draw.circle(one_of_four, BLACK, (18, 5), 4, 1)
-pygame.draw.circle(one_of_four, BLACK, (27, 5), 4, 1)
-pygame.draw.circle(one_of_four, BLACK, (36, 5), 4, 1)
-
-
 class Game(object):
     def __init__(self):
         self.mouse = pygame.mouse.get_pos()
@@ -1969,15 +1985,15 @@ class Game(object):
         player.learn_recipe('stick')
         player.learn_building('animal trap')
         player.adjust_inventory('energy', 100)
-        player.adjust_inventory('wood', 100000)
-        player.adjust_inventory('stick', 100000)
-        player.adjust_inventory('stone', 100000)
-        player.adjust_inventory('ironore', 100000)
-        player.adjust_inventory('goldore', 100000)
-        player.adjust_inventory('iron', 100000)
-        player.adjust_inventory('gold', 100000)
-        player.adjust_inventory('food', 100000)
-        player.adjust_inventory('coins', 100000)
+        # player.adjust_inventory('wood', 100000)
+        # player.adjust_inventory('stick', 100000)
+        # player.adjust_inventory('stone', 100000)
+        # player.adjust_inventory('ironore', 100000)
+        # player.adjust_inventory('goldore', 100000)
+        # player.adjust_inventory('iron', 100000)
+        # player.adjust_inventory('gold', 100000)
+        # player.adjust_inventory('food', 100000)
+        # player.adjust_inventory('coins', 100000)
 
         # dropbuffs = {'res': {'gives':{'thing': 0}...,'minecosts': {'thing': 0}}...}
         self.dropbuffs = {}
@@ -1998,8 +2014,8 @@ class Game(object):
 
         pygame.time.set_timer(GAME_TICK, int(1000//TICKS_PER_SEC))
         self.timers = [
-                       # Timer(5*ONE_SEC, player.adjust_inventory, {'item': 'energy', 'amt': 1}, True),
-                       Timer(ONE_SEC, player.adjust_inventory, {'item': 'energy', 'amt': 100}, True),
+                       Timer(5*ONE_SEC, player.adjust_inventory, {'item': 'energy', 'amt': 1}, True),
+                       # Timer(ONE_SEC, player.adjust_inventory, {'item': 'energy', 'amt': 100}, True),
                        Timer(5*ONE_SEC, all_maps_spawn, {'maps': self.maps, 'game': self}, True),
                        Timer(int(ONE_SEC/20), self.update_map_surf, {}, True),
                        Timer(int(ONE_SEC/10), self.update_map_thumbs, {}, True),
