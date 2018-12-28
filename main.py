@@ -1916,8 +1916,33 @@ def draw_radius_surface(pos, radius):
         gameDisplay.blit(radius_surface, blit_pos)
 
 
+def start_screen():
+    start_button = Button(250, 50, 'NEW GAME', BLACK, '45')
+    start_button.rect.topleft = ((DISPLAY_WIDTH - start_button.rect.w) / 2, 200)
+    cheat_button = Button(450, 50, 'NEW GAME WITH CHEATS', BLACK, '45')
+    cheat_button.rect.topleft = ((DISPLAY_WIDTH - cheat_button.rect.w) / 2, 400)
+
+    gameDisplay.fill(WHITE)
+    gameDisplay.blit(start_button.surf, start_button.rect)
+    gameDisplay.blit(cheat_button.surf, cheat_button.rect)
+    pygame.display.flip()
+    while True:
+        mouse = pygame.mouse.get_pos()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.MOUSEBUTTONUP:
+                if start_button.rect.collidepoint(mouse):
+                    game = Game()
+                    game.main()
+                if cheat_button.rect.collidepoint(mouse):
+                    game = Game(cheats=True)
+                    game.main()
+
+
 class Game(object):
-    def __init__(self):
+    def __init__(self, cheats=False):
         self.mouse = pygame.mouse.get_pos()
         self.game_mouse = get_rel_mouse(self.mouse, gameArea)
         self.map_mouse = get_rel_mouse(self.mouse, mapArea)
@@ -1985,15 +2010,16 @@ class Game(object):
         player.learn_recipe('stick')
         player.learn_building('animal trap')
         player.adjust_inventory('energy', 100)
-        # player.adjust_inventory('wood', 100000)
-        # player.adjust_inventory('stick', 100000)
-        # player.adjust_inventory('stone', 100000)
-        # player.adjust_inventory('ironore', 100000)
-        # player.adjust_inventory('goldore', 100000)
-        # player.adjust_inventory('iron', 100000)
-        # player.adjust_inventory('gold', 100000)
-        # player.adjust_inventory('food', 100000)
-        # player.adjust_inventory('coins', 100000)
+        if cheats:
+            player.adjust_inventory('wood', 100000)
+            player.adjust_inventory('stick', 100000)
+            player.adjust_inventory('stone', 100000)
+            player.adjust_inventory('ironore', 100000)
+            player.adjust_inventory('goldore', 100000)
+            player.adjust_inventory('iron', 100000)
+            player.adjust_inventory('gold', 100000)
+            player.adjust_inventory('food', 100000)
+            player.adjust_inventory('coins', 100000)
 
         # dropbuffs = {'res': {'gives':{'thing': 0}...,'minecosts': {'thing': 0}}...}
         self.dropbuffs = {}
@@ -2013,9 +2039,12 @@ class Game(object):
         self.tracker = 0
 
         pygame.time.set_timer(GAME_TICK, int(1000//TICKS_PER_SEC))
+        if not cheats:
+            energy_timer = Timer(5*ONE_SEC, player.adjust_inventory, {'item': 'energy', 'amt': 1}, True)
+        else:
+            energy_timer = Timer(ONE_SEC, player.adjust_inventory, {'item': 'energy', 'amt': 100}, True)
         self.timers = [
-                       Timer(5*ONE_SEC, player.adjust_inventory, {'item': 'energy', 'amt': 1}, True),
-                       # Timer(ONE_SEC, player.adjust_inventory, {'item': 'energy', 'amt': 100}, True),
+                       energy_timer,
                        Timer(5*ONE_SEC, all_maps_spawn, {'maps': self.maps, 'game': self}, True),
                        Timer(int(ONE_SEC/20), self.update_map_surf, {}, True),
                        Timer(int(ONE_SEC/10), self.update_map_thumbs, {}, True),
@@ -2418,7 +2447,5 @@ class Game(object):
             self.drawgame()
 
 
-game = Game()
-
 if __name__ == '__main__':
-    game.main()
+    start_screen()
