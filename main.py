@@ -97,7 +97,7 @@ RESOURCES = {
                       'minecosts': {'energy': 5}},
              'boulder': {'image': pygame.image.load('Boulder2.png').convert_alpha(),
                          'minetime': 10*ONE_SEC,
-                         'minegives': {'stone': 5},
+                         'minegives': {'stone': 4},
                          'minecosts': {'energy': 20}},
              'irondeposit': {'image': pygame.image.load('Iron.png').convert_alpha(),
                              'minetime': 10*ONE_SEC,
@@ -184,17 +184,27 @@ RESOURCES = {
                                 'workradius': 3,
                                 'upkeep': {'workers': 1},
                                 'frequency': 5*ONE_SEC},
-             'miner': {'symbol': "Mn",
-                       'minetime': 5*ONE_SEC,
-                       'minegives': {'iron': 5,
-                                     'stone': 10,
-                                     'wood': 10},
-                       'minecosts': {'energy': 20},
-                       'confirmdestroy': True,
-                       'gathers': ['boulder', 'irondeposit', 'golddeposit'],
-                       'workradius': 2,
-                       'upkeep': {'workers': 1},
-                       'frequency': 5*ONE_SEC},
+             'tree farm': {'symbol': "TF",
+                           'minetime': TEN_SEC,
+                           'minegives': {'stone': 10,
+                                         'wood': 20,
+                                         'glass': 20},
+                           'minecosts': {'energy': 20},
+                           'confirmdestroy': True,
+                           'produces': {'wood': 1},
+                           'upkeep': {'workers': 1},
+                           'frequency': TEN_SEC},
+             'prospector': {'symbol': "Pr",
+                            'minetime': 5*ONE_SEC,
+                            'minegives': {'iron': 5,
+                                          'stone': 10,
+                                          'wood': 10},
+                            'minecosts': {'energy': 20},
+                            'confirmdestroy': True,
+                            'gathers': ['boulder', 'irondeposit', 'golddeposit'],
+                            'workradius': 2,
+                            'upkeep': {'workers': 1},
+                            'frequency': 5*ONE_SEC},
              'wood generator': {'symbol': "WG",
                                 'minetime': 5*ONE_SEC,
                                 'minegives': {'iron': 5,
@@ -215,7 +225,29 @@ RESOURCES = {
                                 'gathers': ['boulder', 'irondeposit', 'golddeposit'],
                                 'workradius': 3,
                                 'upkeep': {'power': 1},
-                                'frequency': 5*ONE_SEC}
+                                'frequency': 5*ONE_SEC},
+             'iron mine': {'symbol': "IM",
+                           'minetime': TEN_SEC,
+                           'minegives': {'stone': 20,
+                                         'wood': 40,
+                                         'iron': 10},
+                           'minecosts': {'energy': 20},
+                           'confirmdestroy': True,
+                           'produces': {'ironore': 1},
+                           'upkeep': {'workers': 2,
+                                      'power': 1},
+                           'frequency': TEN_SEC},
+             'gold mine': {'symbol': "GM",
+                           'minetime': TEN_SEC,
+                           'minegives': {'stone': 20,
+                                         'wood': 40,
+                                         'iron': 10},
+                           'minecosts': {'energy': 20},
+                           'confirmdestroy': True,
+                           'produces': {'goldore': 1},
+                           'upkeep': {'workers': 2,
+                                      'power': 1},
+                           'frequency': TEN_SEC},
              }
 
 ALL_RECIPES = {
@@ -271,13 +303,20 @@ BUILDABLES = {
                                                 'wood': 40,
                                                 'energy': 30},
                                  'buildtime': 5 * ONE_SEC},
-              'miner': {'description': 'Automatically mines boulders and ores.',
-                        'canbuild': ['g', 'r', 's', 'i'],
-                        'buildcosts': {'iron': 10,
-                                       'stone': 20,
-                                       'wood': 20,
-                                       'energy': 30},
-                        'buildtime': 5 * ONE_SEC},
+              'tree farm': {'description': 'Generates 1 wood / 10 sec. Needs 1 worker. ',
+                            'canbuild': ['g'],
+                            'buildcosts': {'stone': 30,
+                                           'wood': 40,
+                                           'glass': 40,
+                                           'energy': 50},
+                            'buildtime': 5*ONE_SEC},
+              'prospector': {'description': 'Automatically mines boulders and ores.',
+                             'canbuild': ['g', 'r', 's', 'i'],
+                             'buildcosts': {'iron': 10,
+                                            'stone': 20,
+                                            'wood': 20,
+                                            'energy': 30},
+                             'buildtime': 5 * ONE_SEC},
               'wood generator': {'description': 'Consumes 1 wood and, generates 2 power. ',
                                  'canbuild': ['g', 'r', 's', 'i'],
                                  'buildcosts': {'iron': 10,
@@ -291,7 +330,21 @@ BUILDABLES = {
                                                 'stone': 20,
                                                 'wood': 20,
                                                 'energy': 30},
-                                 'buildtime': 5 * ONE_SEC}
+                                 'buildtime': 5 * ONE_SEC},
+              'iron mine': {'description': 'Generates 1 iron ore / 10 sec. Needs 2 workers and 1 power. ',
+                            'canbuild': ['r'],
+                            'buildcosts': {'stone': 40,
+                                           'wood': 80,
+                                           'iron': 20,
+                                           'energy': 80},
+                            'buildtime': TEN_SEC},
+              'gold mine': {'description': 'Generates 1 gold ore / 10 sec. Needs 2 workers and 1 power. ',
+                            'canbuild': ['r'],
+                            'buildcosts': {'stone': 40,
+                                           'wood': 80,
+                                           'iron': 20,
+                                           'energy': 80},
+                            'buildtime': TEN_SEC},
               }
 
 ITEMS = {
@@ -425,10 +478,14 @@ ITEMS = {
                             'lower': 'lumberjack hut',
                             'plural': 'lumberjack huts',
                             'plural_i_cap': 'Lumberjack huts'},
-         'miner': {'i_cap': 'Miner',
-                   'lower': 'miner',
-                   'plural': 'miners',
-                   'plural_i_cap': 'Miners'},
+         'tree farm': {'i_cap': 'Tree farm',
+                       'lower': 'tree farm',
+                       'plural': 'tree farms',
+                       'plural_i_cap': 'Tree farms'},
+         'prospector': {'i_cap': 'Prospector',
+                        'lower': 'prospector',
+                        'plural': 'prospectors',
+                        'plural_i_cap': 'Prospectors'},
          'wood generator': {'i_cap': 'Wood generator',
                             'lower': 'wood generator',
                             'plural': 'wood generators',
@@ -436,7 +493,15 @@ ITEMS = {
          'electric miner': {'i_cap': 'Electric miner',
                             'lower': 'electric miner',
                             'plural': 'electric miners',
-                            'plural_i_cap': 'Electric miners'}
+                            'plural_i_cap': 'Electric miners'},
+         'iron mine': {'i_cap': 'Iron mine',
+                       'lower': 'iron mine',
+                       'plural': 'iron mines',
+                       'plural_i_cap': 'Iron mines'},
+         'gold mine': {'i_cap': 'Gold mine',
+                       'lower': 'gold mine',
+                       'plural': 'gold mines',
+                       'plural_i_cap': 'Gold mines'},
          }
 
 PERKS = {
@@ -456,11 +521,11 @@ PERKS = {
                  'description': 'Learn how to make glass and how to smelt iron and gold.',
                  'dependencies': ['000'],
                  'knowledge': {'recipes': ['glass', 'iron', 'gold']}},
-         '012': {'name': 'Mining',
+         '012': {'name': 'Prospecting',
                  'cost': 50,
-                 'description': 'Learn how to build miners who can mine Boulders and ore.',
+                 'description': 'Learn how to install prospectors who can mine Boulders and ore.',
                  'dependencies': ['011'],
-                 'knowledge': {'buildings': ['miner']}},
+                 'knowledge': {'buildings': ['prospector']}},
          '013': {'name': 'Better mining',
                  'cost': 100,
                  'description': 'Get 50% more stone from boulders and ore when mining.',
@@ -469,7 +534,7 @@ PERKS = {
                                            'irondeposit': {'ironore': 0.5},
                                            'golddeposit': {'goldore': 0.5}}}},
          '021': {'name': 'Power!',
-                 'cost': 50,
+                 'cost': 100,
                  'description': 'Learn how to build a generator that burns wood. ',
                  'dependencies': ['011'],
                  'knowledge': {'buildings': ['wood generator']}},
@@ -479,7 +544,7 @@ PERKS = {
                  'dependencies': ['000'],
                  'bonuses': {'minegives': {'tree': {'wood': 0.5}}}},
          '102': {'name': 'Electric Mining',
-                 'cost': 50,
+                 'cost': 100,
                  'description': 'Learn how to build electric miners. ',
                  'dependencies': ['021', '101'],
                  'knowledge': {'buildings': ['electric miner']}},
@@ -504,10 +569,15 @@ PERKS = {
                  'dependencies': ['101'],
                  'knowledge': {'buildings': ['fishing shack']}},
          '122': {'name': 'Farm',
-                 'cost': 50,
+                 'cost': 100,
                  'description': 'Learn how to build farms.',
                  'dependencies': ['112'],
                  'knowledge': {'buildings': ['farm']}},
+         '123': {'name': 'Tree Farm',
+                 'cost': 100,
+                 'description': 'Learn how to build tree farms.',
+                 'dependencies': ['113'],
+                 'knowledge': {'buildings': ['tree farm']}},
          '131': {'name': 'Bonuser Wood',
                  'cost': 100,
                  'description': 'Get 50% more wood from trees.',
@@ -523,6 +593,28 @@ PERKS = {
                  'description': 'Chop trees 50% faster.',
                  'dependencies': ['141'],
                  'bonuses': {'minetime': {'tree': 0.5}}},
+         '200': {'name': 'Bonus Ore',
+                 'cost': 100,
+                 'description': 'Get 50% more ore from deposits.',
+                 'dependencies': ['100'],
+                 'bonuses': {'minegives': {'golddeposit': {'goldore': 0.5},
+                                           'irondeposit': {'ironore': 0.5}}}},
+         '201': {'name': 'Bonuser Ore',
+                 'cost': 200,
+                 'description': 'Get 100% more ore from deposits.',
+                 'dependencies': ['200'],
+                 'bonuses': {'minegives': {'golddeposit': {'goldore': 1.0},
+                                           'irondeposit': {'ironore': 1.0}}}},
+         '211': {'name': 'Iron Mine',
+                 'cost': 100,
+                 'description': 'Learn how to build iron mines.',
+                 'dependencies': ['200'],
+                 'knowledge': {'buildings': ['iron mine']}},
+         '212': {'name': 'Gold Mine',
+                 'cost': 200,
+                 'description': 'Learn how to build gold mines.',
+                 'dependencies': ['211'],
+                 'knowledge': {'buildings': ['gold mine']}},
          }
 
 GAME_AREA_RECT = (GAME_OFFSETS['x'], GAME_OFFSETS['y'], GAME_WIDTH, GAME_HEIGHT)
@@ -2375,68 +2467,69 @@ class Game(object):
                             self.perk_window.scroll(10)
 
                 if event.type == pygame.MOUSEBUTTONUP:
-                    if self.map_view:
-                        xgrid = int(map_mouse[0]//TILE_WIDTH)
-                        ygrid = int(map_mouse[1]//TILE_HEIGHT)
-                        if 0 <= xgrid < MAP_SIZE and 0 <= ygrid < MAP_SIZE:
-                            if type(self.maps[ygrid][xgrid]) is Map:
-                                self.cur_map = self.maps[ygrid][xgrid]
-                                self.map_view = False
-                            elif (type(self.maps[ygrid][xgrid]) is BuyMap
-                                  and player.inventory['coins'] >= self.maps[ygrid][xgrid].cost):
-                                self.buy_map((xgrid, ygrid))
-                    else:
-                        for y in range(MAP_SIZE):
-                            for x in range(MAP_SIZE):
-                                if self.cur_map.tiles[y][x].check_mouseover(map_mouse):
-                                    self.cur_map.tiles[y][x].doclick(event, self)
+                    if event.button == 1:
+                        if self.map_view:
+                            xgrid = int(map_mouse[0]//TILE_WIDTH)
+                            ygrid = int(map_mouse[1]//TILE_HEIGHT)
+                            if 0 <= xgrid < MAP_SIZE and 0 <= ygrid < MAP_SIZE:
+                                if type(self.maps[ygrid][xgrid]) is Map:
+                                    self.cur_map = self.maps[ygrid][xgrid]
+                                    self.map_view = False
+                                elif (type(self.maps[ygrid][xgrid]) is BuyMap
+                                      and player.inventory['coins'] >= self.maps[ygrid][xgrid].cost):
+                                    self.buy_map((xgrid, ygrid))
+                        else:
+                            for y in range(MAP_SIZE):
+                                for x in range(MAP_SIZE):
+                                    if self.cur_map.tiles[y][x].check_mouseover(map_mouse):
+                                        self.cur_map.tiles[y][x].doclick(event, self)
 
-                    if mapviewrect.collidepoint(game_mouse):
-                        self.map_view = not self.map_view
-                        self.force_update_map_thumbs()
+                        if mapviewrect.collidepoint(game_mouse):
+                            self.map_view = not self.map_view
+                            self.force_update_map_thumbs()
 
-                    if self.cur_page == 'Inventory':
-                        for button in self.sell_buttons:
-                            if button.rect.collidepoint(mouse):
-                                player.adjust_inventory(button.tags[0], - int(button.string))
-                                player.adjust_inventory('coins', ITEMS[button.tags[0]]['sell_value']*int(button.string))
+                        if self.cur_page == 'Inventory':
+                            for button in self.sell_buttons:
+                                if button.rect.collidepoint(mouse):
+                                    player.adjust_inventory(button.tags[0], - int(button.string))
+                                    player.adjust_inventory('coins', ITEMS[button.tags[0]]['sell_value']*int(button.string))
 
-                    elif self.cur_page == 'Craft':
-                        for recipe in self.recipe_surfaces:
-                            if recipe.check_mouseover(mouse):
-                                if player.craftable(recipe.string):
+                        elif self.cur_page == 'Craft':
+                            for recipe in self.recipe_surfaces:
+                                if recipe.check_mouseover(mouse):
+                                    if player.craftable(recipe.string):
+                                        self.drawgame()
+                                        do_crafting_popup(recipe.string)
+
+                        elif self.cur_page == 'Use':
+                            for usable in self.usables_surfaces:
+                                if usable.check_mouseover(mouse):
+                                    if player.usable(usable.string):
+                                        self.drawgame()
+                                        do_using_popup(usable.string)
+
+                        elif self.cur_page == 'Build':
+                            for buildsurf in self.build_surfaces:
+                                if buildsurf.check_mouseover(mouse) and player.buildable(buildsurf.string):
+                                    self.map_view = False
                                     self.drawgame()
-                                    do_crafting_popup(recipe.string)
+                                    do_build_popup(buildsurf.string, self.cur_map, self)
 
-                    elif self.cur_page == 'Use':
-                        for usable in self.usables_surfaces:
-                            if usable.check_mouseover(mouse):
-                                if player.usable(usable.string):
-                                    self.drawgame()
-                                    do_using_popup(usable.string)
+                        elif self.cur_page == 'Perks':
+                            self.perk_window.moving_h = False
+                            self.perk_window.moving_v = False
+                            if self.perk_window.view_surf.get_rect(topleft=perkArea.get_abs_offset()).collidepoint(mouse):
+                                rel_mouse = (perk_mouse[0]+self.perk_window.xpos, perk_mouse[1]+self.perk_window.ypos)
+                                for perk in self.perks:
+                                    if perk.rect.collidepoint(rel_mouse):
+                                        perk.do_click(self)
 
-                    elif self.cur_page == 'Build':
-                        for buildsurf in self.build_surfaces:
-                            if buildsurf.check_mouseover(mouse) and player.buildable(buildsurf.string):
-                                self.map_view = False
-                                self.drawgame()
-                                do_build_popup(buildsurf.string, self.cur_map, self)
-
-                    elif self.cur_page == 'Perks':
-                        self.perk_window.moving_h = False
-                        self.perk_window.moving_v = False
-                        if self.perk_window.view_surf.get_rect(topleft=perkArea.get_abs_offset()).collidepoint(mouse):
-                            rel_mouse = (perk_mouse[0]+self.perk_window.xpos, perk_mouse[1]+self.perk_window.ypos)
-                            for perk in self.perks:
-                                if perk.rect.collidepoint(rel_mouse):
-                                    perk.do_click(self)
-
-                    for i, page in enumerate(self.page_surfaces):
-                        pagemouse = (mouse[0] - GAME_WIDTH - 60,
-                                     mouse[1] - GAME_OFFSET[1] + self.page_select_surf.get_rect().h)
-                        if page.check_mouseover(pagemouse):
-                            self.cur_page = self.pages[i]
-                            self.page_select_surf = self.page_select_surfs[self.cur_page]
+                        for i, page in enumerate(self.page_surfaces):
+                            pagemouse = (mouse[0] - GAME_WIDTH - 60,
+                                         mouse[1] - GAME_OFFSET[1] + self.page_select_surf.get_rect().h)
+                            if page.check_mouseover(pagemouse):
+                                self.cur_page = self.pages[i]
+                                self.page_select_surf = self.page_select_surfs[self.cur_page]
 
             for thing in self.perks:
                 thing.update_status()
