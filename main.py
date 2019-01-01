@@ -2467,8 +2467,8 @@ class Game(object):
                             self.perk_window.scroll(10)
 
                 if event.type == pygame.MOUSEBUTTONUP:
-                    if event.button == 1:
-                        if self.map_view:
+                    if self.map_view:
+                        if event.button == 1:
                             xgrid = int(map_mouse[0]//TILE_WIDTH)
                             ygrid = int(map_mouse[1]//TILE_HEIGHT)
                             if 0 <= xgrid < MAP_SIZE and 0 <= ygrid < MAP_SIZE:
@@ -2478,12 +2478,13 @@ class Game(object):
                                 elif (type(self.maps[ygrid][xgrid]) is BuyMap
                                       and player.inventory['coins'] >= self.maps[ygrid][xgrid].cost):
                                     self.buy_map((xgrid, ygrid))
-                        else:
-                            for y in range(MAP_SIZE):
-                                for x in range(MAP_SIZE):
-                                    if self.cur_map.tiles[y][x].check_mouseover(map_mouse):
-                                        self.cur_map.tiles[y][x].doclick(event, self)
+                    else:
+                        for y in range(MAP_SIZE):
+                            for x in range(MAP_SIZE):
+                                if self.cur_map.tiles[y][x].check_mouseover(map_mouse):
+                                    self.cur_map.tiles[y][x].doclick(event, self)
 
+                    if event.button == 1:
                         if mapviewrect.collidepoint(game_mouse):
                             self.map_view = not self.map_view
                             self.force_update_map_thumbs()
