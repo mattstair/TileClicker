@@ -285,19 +285,19 @@ BUILDABLES = {
                                       'wood': 40,
                                       'energy': 50},
                        'buildtime': 5*ONE_SEC},
-              'fishing shack': {'description':'Automatically collects nearby fish.',
+              'fishing shack': {'description': 'Automatically collects nearby fish. Needs 1 worker. ',
                                 'canbuild': ['g', 'r', 's', 'i'],
                                 'buildcosts': {'stick': 10,
                                                'wood': 20,
                                                'energy': 30},
                                 'buildtime': 5*ONE_SEC},
-              'forager hut': {'description': 'Automatically collects nearby berries and rocks.',
+              'forager hut': {'description': 'Automatically collects nearby berries and rocks. Needs 1 worker. ',
                               'canbuild': ['g', 'r', 's', 'i'],
                               'buildcosts': {'stick': 10,
                                              'wood': 20,
                                              'energy': 30},
                               'buildtime': 5*ONE_SEC},
-              'lumberjack hut': {'description': 'Automatically chops down trees.',
+              'lumberjack hut': {'description': 'Automatically chops down trees. Needs 1 worker. ',
                                  'canbuild': ['g', 'r', 's', 'i'],
                                  'buildcosts': {'stone': 30,
                                                 'wood': 40,
@@ -310,27 +310,27 @@ BUILDABLES = {
                                            'glass': 40,
                                            'energy': 50},
                             'buildtime': 5*ONE_SEC},
-              'prospector': {'description': 'Automatically mines boulders and ores.',
+              'prospector': {'description': 'Automatically mines boulders and ores. Needs 1 worker. ',
                              'canbuild': ['g', 'r', 's', 'i'],
                              'buildcosts': {'iron': 10,
                                             'stone': 20,
                                             'wood': 20,
                                             'energy': 30},
                              'buildtime': 5 * ONE_SEC},
-              'wood generator': {'description': 'Consumes 1 wood and, generates 2 power. ',
+              'wood generator': {'description': 'Consumes 1 wood and generates 2 power. ',
                                  'canbuild': ['g', 'r', 's', 'i'],
                                  'buildcosts': {'iron': 10,
                                                 'stone': 20,
                                                 'wood': 20,
                                                 'energy': 30},
                                  'buildtime': 5 * ONE_SEC},
-              'electric miner': {'description': 'Automatically mines boulders and ores. Uses 1 power. ',
-                                 'canbuild': ['g', 'r', 's', 'i'],
-                                 'buildcosts': {'iron': 10,
-                                                'stone': 20,
-                                                'wood': 20,
-                                                'energy': 30},
-                                 'buildtime': 5 * ONE_SEC},
+              # 'electric miner': {'description': 'Automatically mines boulders and ores. Uses 1 power. ',
+              #                    'canbuild': ['g', 'r', 's', 'i'],
+              #                    'buildcosts': {'iron': 10,
+              #                                   'stone': 20,
+              #                                   'wood': 20,
+              #                                   'energy': 30},
+              #                    'buildtime': 5 * ONE_SEC},
               'iron mine': {'description': 'Generates 1 iron ore / 10 sec. Needs 2 workers and 1 power. ',
                             'canbuild': ['r'],
                             'buildcosts': {'stone': 40,
@@ -490,10 +490,10 @@ ITEMS = {
                             'lower': 'wood generator',
                             'plural': 'wood generators',
                             'plural_i_cap': 'Wood generators'},
-         'electric miner': {'i_cap': 'Electric miner',
-                            'lower': 'electric miner',
-                            'plural': 'electric miners',
-                            'plural_i_cap': 'Electric miners'},
+         # 'electric miner': {'i_cap': 'Electric miner',
+         #                    'lower': 'electric miner',
+         #                    'plural': 'electric miners',
+         #                    'plural_i_cap': 'Electric miners'},
          'iron mine': {'i_cap': 'Iron mine',
                        'lower': 'iron mine',
                        'plural': 'iron mines',
@@ -524,7 +524,7 @@ PERKS = {
          '012': {'name': 'Prospecting',
                  'cost': 50,
                  'description': 'Learn how to install prospectors who can mine Boulders and ore.',
-                 'dependencies': ['011'],
+                 'dependencies': ['011', '102'],
                  'knowledge': {'buildings': ['prospector']}},
          '013': {'name': 'Better mining',
                  'cost': 100,
@@ -543,40 +543,40 @@ PERKS = {
                  'description': 'Get 50% more wood from trees.',
                  'dependencies': ['000'],
                  'bonuses': {'minegives': {'tree': {'wood': 0.5}}}},
-         '102': {'name': 'Electric Mining',
-                 'cost': 100,
-                 'description': 'Learn how to build electric miners. ',
-                 'dependencies': ['021', '101'],
-                 'knowledge': {'buildings': ['electric miner']}},
-         '101': {'name': 'People!',
+         '102': {'name': 'People!',
                  'cost': 50,
                  'description': 'Learn how to build houses. ',
                  'dependencies': ['100'],
                  'knowledge': {'buildings': ['house']}},
-         '112': {'name': 'Forager Hut',
+         # '103': {'name': 'Electric Mining',
+         #         'cost': 100,
+         #         'description': 'Learn how to build electric miners. ',
+         #         'dependencies': ['021', '102'],
+         #         'knowledge': {'buildings': ['electric miner']}},
+         '113': {'name': 'Forager Hut',
                  'cost': 50,
                  'description': 'Learn how to build forager huts.',
-                 'dependencies': ['101'],
+                 'dependencies': ['102'],
                  'knowledge': {'buildings': ['forager hut']}},
-         '113': {'name': 'Lumberjack Hut',
+         '114': {'name': 'Lumberjack Hut',
                  'cost': 50,
                  'description': 'Learn how to build lumberjack huts.',
-                 'dependencies': ['101'],
+                 'dependencies': ['102'],
                  'knowledge': {'buildings': ['lumberjack hut']}},
-         '114': {'name': 'Fishing Shack',
+         '115': {'name': 'Fishing Shack',
                  'cost': 50,
                  'description': 'Learn how to build fishing shacks.',
-                 'dependencies': ['101'],
+                 'dependencies': ['102'],
                  'knowledge': {'buildings': ['fishing shack']}},
-         '122': {'name': 'Farm',
+         '123': {'name': 'Farm',
                  'cost': 100,
                  'description': 'Learn how to build farms.',
-                 'dependencies': ['112'],
+                 'dependencies': ['113'],
                  'knowledge': {'buildings': ['farm']}},
-         '123': {'name': 'Tree Farm',
+         '124': {'name': 'Tree Farm',
                  'cost': 100,
                  'description': 'Learn how to build tree farms.',
-                 'dependencies': ['113'],
+                 'dependencies': ['114'],
                  'knowledge': {'buildings': ['tree farm']}},
          '131': {'name': 'Bonuser Wood',
                  'cost': 100,
@@ -608,12 +608,12 @@ PERKS = {
          '211': {'name': 'Iron Mine',
                  'cost': 100,
                  'description': 'Learn how to build iron mines.',
-                 'dependencies': ['200'],
+                 'dependencies': ['200', '021', '102'],
                  'knowledge': {'buildings': ['iron mine']}},
          '212': {'name': 'Gold Mine',
                  'cost': 200,
                  'description': 'Learn how to build gold mines.',
-                 'dependencies': ['211'],
+                 'dependencies': ['211', '021', '102'],
                  'knowledge': {'buildings': ['gold mine']}},
          }
 
@@ -645,6 +645,8 @@ rand_row = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 rand_col = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 random.shuffle(rand_row)
 random.shuffle(rand_col)
+
+game = None
 
 
 def text_objects(text, font, color=BLACK, bg=None):
@@ -1397,7 +1399,7 @@ class Button(object):
 
     def make(self):
         self.surf.fill(self.bg_color)
-        pygame.draw.rect(self.surf, BLACK, self.rect, 1)
+        pygame.draw.rect(self.surf, BLACK, self.surf.get_rect(), 1)
         text_surf, text_rect = text_objects(self.string, self.font, self.font_color)
         text_rect.center = (self.surf.get_rect().centerx, self.surf.get_rect().centery+2)
         self.surf.blit(text_surf, text_rect)
@@ -1972,7 +1974,8 @@ def get_sell_buttons(game):
     return sell_buttons
 
 
-def make_perk_surf(surface, game_perks):
+def make_perk_surf(surface, game_perks, rel_mouse):
+    mouse = pygame.mouse.get_pos()
     surface.fill(WHITE)
     '''Draw lines to show dependencies'''
     for perk in game_perks:
@@ -1980,11 +1983,29 @@ def make_perk_surf(surface, game_perks):
             x1 = (PERK_OFFSET+PERK_WIDTH/2)+perk.pos[0]*(PERK_WIDTH+PERK_DIST)
             y1 = (PERK_OFFSET+PERK_HEIGHT/2)+perk.pos[1]*(PERK_HEIGHT+PERK_DIST)
             perk_pos = (x1, y1)
+            green_lines = []
+            red_lines = []
             for target in perk.dependencies:
                 x2 = (PERK_OFFSET+PERK_WIDTH/2)+PERKS[target]['pos'][0]*(PERK_WIDTH+PERK_DIST)
                 y2 = (PERK_OFFSET+PERK_HEIGHT/2)+PERKS[target]['pos'][1]*(PERK_HEIGHT+PERK_DIST)
                 target_pos = (x2, y2)
-                pygame.draw.line(surface, BLACK, perk_pos, target_pos, 1)
+                if (perkArea.get_rect(topleft=perkArea.get_abs_offset()).collidepoint(mouse) and
+                    perk.rect.collidepoint(rel_mouse)):
+                    for targ_perk in game_perks:
+                        if targ_perk.id == target:
+                            if targ_perk.status == 'purchased':
+                                green_lines.append((perk_pos, target_pos))
+                            else:
+                                red_lines.append((perk_pos, target_pos))
+                else:
+                    pygame.draw.line(surface, BLACK, perk_pos, target_pos, 1)
+            if len(green_lines) > 0:
+                for line in green_lines:
+                    pygame.draw.line(surface, GREEN, line[0], line[1], 2)
+            if len(red_lines) > 0:
+                for line in red_lines:
+                    pygame.draw.line(surface, RED, line[0], line[1], 2)
+
     for perk in game_perks:
         perk.make_surf()
         perk.draw(surface)
@@ -2009,6 +2030,7 @@ def draw_radius_surface(pos, radius):
 
 
 def start_screen():
+    global game
     start_button = Button(250, 50, 'NEW GAME', BLACK, '45')
     start_button.rect.topleft = ((DISPLAY_WIDTH - start_button.rect.w) / 2, 200)
     cheat_button = Button(450, 50, 'NEW GAME WITH CHEATS', BLACK, '45')
@@ -2048,6 +2070,9 @@ class Game(object):
         self.energy_bar.val = player.inventory['energy']
         self.energy_text = TextLine('Energy:', font='large')
         self.energy_text.rect.x, self.energy_text.rect.y = 50, 6
+
+        self.eat_button = Button(40, 20, 'Eat')
+        self.eat_button.rect = self.eat_button.surf.get_rect(topleft=(325, 15))
 
         self.pages = ['Inventory', 'Use', 'Craft', 'Build', 'Perks']
         self.cur_page = self.pages[0]
@@ -2090,7 +2115,7 @@ class Game(object):
 
         self.perk_window = ScrollWindow((perk_max_x, perk_max_y), (450, 450), WHITE)
 
-        make_perk_surf(self.perk_window.full_surf, self.perks)
+        make_perk_surf(self.perk_window.full_surf, self.perks, self.perk_mouse)
 
         self.page_select_surfs = {}
         for page in self.pages:
@@ -2306,6 +2331,14 @@ class Game(object):
         self.energy_bar.draw()
         if self.energy_bar_flash:
             pygame.draw.rect(gameDisplay, RED, self.energy_bar.get_rect())
+
+        if player.inventory['food'] < 1 or player.inventory['energy'] > (player.max_energy - 1):
+            self.eat_button.font_color = GREY
+        else:
+            self.eat_button.font_color = BLACK
+        self.eat_button.make()
+        gameDisplay.blit(self.eat_button.surf, self.eat_button.rect)
+
         if self.cur_page == 'Inventory':
             self.sell_buttons = get_sell_buttons(self)
             for button in self.sell_buttons:
@@ -2407,14 +2440,14 @@ class Game(object):
                 if bsurf.rect.collidepoint(self.mouse):
                     tooltip = bsurf.tooltip
         elif self.cur_page == 'Perks':
-            make_perk_surf(self.perk_window.full_surf, self.perks)
-            self.perk_window.draw(perkArea, (0, 0))
             rel_mouse = (self.perk_mouse[0]+self.perk_window.xpos, self.perk_mouse[1]+self.perk_window.ypos)
             if self.perk_window.view_surf.get_rect(topleft=perkArea.get_abs_offset()).collidepoint(self.mouse):
                 for perk in self.perks:
                     if perk.rect.collidepoint(rel_mouse):
                         perk.set_tooltip(self)
                         tooltip = perk.tooltip
+            make_perk_surf(self.perk_window.full_surf, self.perks, rel_mouse)
+            self.perk_window.draw(perkArea, (0, 0))
 
         if tooltip:
             tooltip.draw(gameDisplay, self.mouse)
@@ -2485,6 +2518,10 @@ class Game(object):
                                     self.cur_map.tiles[y][x].doclick(event, self)
 
                     if event.button == 1:
+                        if self.eat_button.rect.collidepoint(mouse):
+                            if player.inventory['food'] > 0 and player.inventory['energy'] < player.max_energy:
+                                player.use('food')
+
                         if mapviewrect.collidepoint(game_mouse):
                             self.map_view = not self.map_view
                             self.force_update_map_thumbs()
