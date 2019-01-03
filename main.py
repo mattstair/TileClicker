@@ -170,7 +170,7 @@ RESOURCES = {
                                            'wood': 10},
                              'minecosts': {'energy': 20},
                              'confirmdestroy': True,
-                             'gathers': ['bush', 'rock', 'gem', 'sand'],
+                             'gathers': ['bush', 'rock', 'loosegem', 'sand'],
                              'workradius': 3,
                              'upkeep': {'workers': 1},
                              'frequency': 5*ONE_SEC},
@@ -2131,6 +2131,8 @@ class Game(object):
             player.adjust_inventory('wood', 100000)
             player.adjust_inventory('stick', 100000)
             player.adjust_inventory('stone', 100000)
+            player.adjust_inventory('sand', 100000)
+            player.adjust_inventory('glass', 100000)
             player.adjust_inventory('ironore', 100000)
             player.adjust_inventory('goldore', 100000)
             player.adjust_inventory('iron', 100000)
