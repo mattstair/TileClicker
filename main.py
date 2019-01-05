@@ -1,6 +1,7 @@
 import pygame
 import random
 import math
+import pickle
 import tilemaps
 from collections import defaultdict
 from statusbar import StatusBar
@@ -655,9 +656,12 @@ def text_objects(text, font, color=BLACK, bg=None):
 
 
 class Log(object):
-    def __init__(self):
+    def __init__(self, log_dicts=None):
         self.text_lines = []
         self.surf = None
+        if log_dicts:
+            for log_dict in log_dicts:
+                self.add_line(TextLine(**log_dict))
 
     def add_line(self, textline):
         self.text_lines.append(textline)
@@ -667,6 +671,10 @@ class Log(object):
 
     def make_surf(self):
         self.surf = ToolTip(self.text_lines)
+
+    def export(self):
+        log_lines = [text_line.export() for text_line in self.text_lines]
+        return log_lines
 
 
 log = Log()
@@ -780,34 +788,32 @@ class Player(object):
 
 player = Player()
 
-item_history = {key: [None] for key in player.inventory}
-for i in range(59):
-    for key in item_history:
-        if i == 58:
-            item_history[key].append(0)
-        else:
-            item_history[key].append(None)
-
-
-def update_item_history():
-    for item in player.inventory:
-        item_history[item].append(player.inventory[item])
-        del item_history[item][0]
-
 
 class TextLine(object):
     def __init__(self, string, color=BLACK, font='medium', bg=None, return_val=None):
-        self.font = FONTS[font]
-        self.surf, self.rect = text_objects(string, self.font, color, bg)
         self.string = string
         self.color = color
-        self.tooltip = None
+        self.font_string = font
+        self.bg = bg
         self.return_val = return_val
+        self.font = FONTS[font]
+        self.surf, self.rect = text_objects(string, self.font, color, bg)
+        self.tooltip = None
 
     def check_mouseover(self, relmouse):
         if ((self.rect.x + self.rect.w > relmouse[0] > self.rect.x
              and self.rect.y + self.rect.h > relmouse[1] > self.rect.y)):
             return True
+
+    def export(self):
+        definition = {
+                      'string': self.string,
+                      'color': self.color,
+                      'font': self.font_string,
+                      'bg': self.bg,
+                      'return_val': self.return_val,
+                     }
+        return definition
 
 
 class ToolTip(pygame.Surface):
@@ -2030,7 +2036,10 @@ def draw_radius_surface(pos, radius):
 
 
 def start_screen():
-    global game
+    global log, player, game
+    log = Log()
+    player = Player()
+    game = None
     start_button = Button(250, 50, 'NEW GAME', BLACK, '45')
     start_button.rect.topleft = ((DISPLAY_WIDTH - start_button.rect.w) / 2, 200)
     cheat_button = Button(450, 50, 'NEW GAME WITH CHEATS', BLACK, '45')
@@ -2055,8 +2064,77 @@ def start_screen():
                     game.main()
 
 
+def pause_screen():
+    global player
+    global log
+    global game
+    menuw = 200
+    menuh = 400
+    centerx = menuw//2
+    greyout = pygame.Surface((DISPLAY_WIDTH, DISPLAY_HEIGHT))
+    greyout.fill(WHITE)
+    greyout.set_alpha(150)
+    gameDisplay.blit(greyout, (0, 0))
+    question_text = TextLine('PAUSED', BLACK, 'large')
+    question_text.rect.center = (centerx, 50)
+    continue_button = Button(100, 25, 'Continue')
+    save_button = Button(100, 25, 'Save')
+    load_button = Button(100, 25, 'Load')
+    menu_button = Button(100, 25, 'Main Menu')
+    exit_button = Button(100, 25, 'Exit')
+    continue_button.rect.midtop = (centerx, 100)
+    save_button.rect.midtop = (centerx, 150)
+    load_button.rect.midtop = (centerx, 200)
+    menu_button.rect.midtop = (centerx, 250)
+    exit_button.rect.midtop = (centerx, 300)
+    menu = gameArea.subsurface(((GAME_WIDTH-menuw)/2, (GAME_HEIGHT-menuh)/2, menuw, menuh))
+    menu.fill(WHITE)
+    pygame.draw.rect(menu, BLACK, menu.get_rect(), 1)
+    menu.blit(question_text.surf, question_text.rect)
+    menu.blit(continue_button.surf, continue_button.rect)
+    menu.blit(save_button.surf, save_button.rect)
+    menu.blit(load_button.surf, load_button.rect)
+    menu.blit(menu_button.surf, menu_button.rect)
+    menu.blit(exit_button.surf, exit_button.rect)
+    pygame.display.flip()
+    target = False
+    in_menu = True
+    while in_menu:
+        mouse = pygame.mouse.get_pos()
+        game_mouse = get_rel_mouse(mouse, menu)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                if continue_button.rect.collidepoint(game_mouse):
+                    in_menu = False
+                if save_button.rect.collidepoint(game_mouse):
+                    # with open('save.pickle', 'wb+') as f:
+                    #     pickle.dump(log.export(), f)
+                    #     pickle.dump(player, f)
+                    #     pickle.dump(game, f)
+                    # log.add_line(TextLine('game saved', GREEN))
+                    in_menu = False
+                if load_button.rect.collidepoint(game_mouse):
+                    # with open('save.pickle', 'rb') as f:
+                    #     log_lines = pickle.load(f)
+                    #     log = Log(log_lines)
+                    #     player = pickle.load(f)
+                    #     game = pickle.load(f)
+                    # target = 'load'
+                    in_menu = False
+                if menu_button.rect.collidepoint(game_mouse):
+                    target = 'start'
+                    in_menu = False
+                if exit_button.rect.collidepoint(game_mouse):
+                    pygame.quit()
+                    quit()
+    return target
+
+
 class Game(object):
-    def __init__(self, cheats=False):
+    def __init__(self, cheats=False, save_file=None):
         self.mouse = pygame.mouse.get_pos()
         self.game_mouse = get_rel_mouse(self.mouse, gameArea)
         self.map_mouse = get_rel_mouse(self.mouse, mapArea)
@@ -2167,8 +2245,25 @@ class Game(object):
                        Timer(5*ONE_SEC, all_maps_spawn, {'maps': self.maps, 'game': self}, True),
                        Timer(int(ONE_SEC/20), self.update_map_surf, {}, True),
                        Timer(int(ONE_SEC/10), self.update_map_thumbs, {}, True),
-                       Timer(ONE_SEC, update_item_history, {}, True)
+                       Timer(ONE_SEC, self.update_item_history, {}, True)
         ]
+
+        self.item_history = None
+        self.initialize_item_history()
+
+    def initialize_item_history(self):
+        self.item_history = {key: [None] for key in player.inventory}
+        for i in range(59):
+            for key in self.item_history:
+                if i == 58:
+                    self.item_history[key].append(0)
+                else:
+                    self.item_history[key].append(None)
+
+    def update_item_history(self):
+        for item in player.inventory:
+            self.item_history[item].append(player.inventory[item])
+            del self.item_history[item][0]
 
     def unflash_energy_bar(self):
         self.energy_bar_flash = False
@@ -2372,8 +2467,8 @@ class Game(object):
                     i += tmptext1.get_height()
             for item, info in text_surfs.items():
                 if info['surf'].get_rect(topleft=info['pos']).collidepoint(self.mouse):
-                    ymax = max(num for num in item_history[item] if num is not None)
-                    ymin = min(num for num in item_history[item] if num is not None)
+                    ymax = max(num for num in self.item_history[item] if num is not None)
+                    ymin = min(num for num in self.item_history[item] if num is not None)
                     ymax += 1
                     if ymin > 0:
                         ymin -= 1
@@ -2412,7 +2507,7 @@ class Game(object):
 
                     pygame.draw.rect(chart_area, BLACK, chart_area.get_rect(), 1)
                     prev_point = None
-                    for i, val in enumerate(item_history[item]):
+                    for i, val in enumerate(self.item_history[item]):
                         if val is not None:
                             if prev_point is not None:
                                 pygame.draw.line(chart_area, GREEN, prev_point,
@@ -2460,7 +2555,8 @@ class Game(object):
         clock.tick()
 
     def main(self):
-        while True:
+        restart = False
+        while not restart:
             mouse = self.mouse
             game_mouse = self.game_mouse
             map_mouse = self.map_mouse
@@ -2469,6 +2565,10 @@ class Game(object):
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     quit()
+                if event.type == pygame.KEYUP and event.key == pygame.K_SPACE:
+                    target = pause_screen()
+                    if target == 'start':
+                        restart = True
                 if event.type == GAME_TICK:
                     for i, timer in enumerate(self.timers):
                         if timer.tick() == 'done':
@@ -2578,6 +2678,7 @@ class Game(object):
                 perk_mouse = get_rel_mouse(mouse, perkArea)
                 self.scroll_window(self.perk_window, perk_mouse)
             self.drawgame()
+        start_screen()
 
 
 if __name__ == '__main__':
