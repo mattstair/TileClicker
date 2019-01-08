@@ -5,7 +5,7 @@ WHITE = pygame.Color('white')
 GREY = pygame.Color('grey')
 
 
-class ScrollWindow():
+class ScrollWindow(object):
     def __init__(self, full_size, window_size, bg_color):
         self.full_size: tuple = full_size
         self.window_size: tuple = window_size
@@ -19,9 +19,9 @@ class ScrollWindow():
             self.has_v_sb = False
         self.view_size = (window_size[0]-(self.sb_thickness-1)*self.has_v_sb,
                           window_size[1]-(self.sb_thickness-1)*self.has_h_sb)
-        self.full_surf = pygame.Surface(full_size)
-        self.window_surf = pygame.Surface(window_size)
-        self.view_surf = self.window_surf.subsurface((0, 0, self.view_size[0], self.view_size[1]))
+        self.__full_surf = pygame.Surface(full_size)
+        self.__window_surf = pygame.Surface(window_size)
+        self.__view_surf = self.window_surf.subsurface((0, 0, self.view_size[0], self.view_size[1]))
         if self.has_h_sb:
             self.h_sb_size = self.view_size[0]/full_size[0]*self.window_size[0]-(self.sb_thickness*self.has_v_sb)
         if self.has_v_sb:
@@ -36,6 +36,24 @@ class ScrollWindow():
                                self.sb_thickness, self.sb_thickness)
         self.moving_h = False
         self.moving_v = False
+
+    @property
+    def full_surf(self):
+        if self.__full_surf is None:
+            self.__full_surf = pygame.Surface(self.full_size)
+        return self.__full_surf
+
+    @property
+    def window_surf(self):
+        if self.__window_surf is None:
+            self.__window_surf = pygame.Surface(self.window_size)
+        return self.__window_surf
+
+    @property
+    def view_surf(self):
+        if self.__view_surf is None:
+            self.__view_surf = self.window_surf.subsurface((0, 0, self.view_size[0], self.view_size[1]))
+        return self.__view_surf
 
     def draw(self, surface, pos):
         self.window_surf.fill(self.bg_color)
@@ -111,6 +129,11 @@ class ScrollWindow():
                 self.ypos = self.v_sb.top/(self.view_size[1]-self.v_sb_size)*(self.full_size[1]-self.view_size[1])
             self.draw(surface, pos)
             pygame.display.flip()
+
+    def clean(self):
+        self.__full_surf = None
+        self.__window_surf = None
+        self.__view_surf = None
 
 
 def main():

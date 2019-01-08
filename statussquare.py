@@ -5,16 +5,23 @@ black = (0, 0, 0)
 green = (0, 100, 0)
 
 
-class StatusSquare():
+class StatusSquare(object):
     def __init__(self, w, h, color, perc=0.0, alpha=150):
         self.w = w
         self.h = h
         self.rect = pygame.Rect(0, 0, w, h)
         self.color = color
         self.value = perc
-        self.surf = pygame.Surface((w, h))
-        self.surf.set_colorkey(black)
-        self.surf.set_alpha(alpha)
+        self.alpha = alpha
+        self.__surf = None
+
+    @property
+    def surf(self):
+        if self.__surf is None:
+            self.__surf = pygame.Surface((self.w, self.h))
+            self.__surf.set_colorkey(black)
+            self.__surf.set_alpha(self.alpha)
+        return self.__surf
 
     def increment(self, inc):
         amt = min(100, max(0, self.value + inc))
@@ -59,6 +66,9 @@ class StatusSquare():
             pointlist = [(0, 0), (self.w, 0), (self.w, self.h), (0, self.h)]
         self.surf.fill(black)
         pygame.draw.polygon(self.surf, self.color, pointlist)
+
+    def clean(self):
+        self.__surf = None
 
 
 def main():

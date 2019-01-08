@@ -136,7 +136,7 @@ RESOURCES = {
                              'minetime': ONE_SEC,
                              'minegives': {'food': 4},
                              'minecosts': {'energy': 5}},
-             'house': {'image': pygame.image.load('images/house.png').convert_alpha(),
+             'house': {'image': pygame.image.load('images/house0.png').convert_alpha(),
                        'minetime': TEN_SEC,
                        'minegives': {'stone': 10,
                                      'wood': 20},
@@ -146,7 +146,7 @@ RESOURCES = {
                        'confirmdestroy': True,
                        'upkeep': {'food': 1},
                        'frequency': TEN_SEC},
-             'farm': {'symbol': "Fm",
+             'farm': {'image': pygame.image.load('images/farm.png').convert_alpha(),
                       'minetime': TEN_SEC,
                       'minegives': {'stone': 10,
                                     'wood': 20},
@@ -155,7 +155,7 @@ RESOURCES = {
                       'produces': {'food': 1},
                       'upkeep': {'workers': 1},
                       'frequency': TEN_SEC},
-             'fishing shack': {'symbol': "FS",
+             'fishing shack': {'image': pygame.image.load('images/tackle.png').convert_alpha(),
                                'minetime': 5*ONE_SEC,
                                'minegives': {'stick': 5,
                                              'wood': 10},
@@ -165,7 +165,7 @@ RESOURCES = {
                                'workradius': 2,
                                'upkeep': {'workers': 1},
                                'frequency': 5*ONE_SEC},
-             'forager hut': {'symbol': "FH",
+             'forager hut': {'image': pygame.image.load('images/forager.png').convert_alpha(),
                              'minetime': 5*ONE_SEC,
                              'minegives': {'stick': 5,
                                            'wood': 10},
@@ -185,7 +185,7 @@ RESOURCES = {
                                 'workradius': 3,
                                 'upkeep': {'workers': 1},
                                 'frequency': 5*ONE_SEC},
-             'tree farm': {'symbol': "TF",
+             'tree farm': {'image': pygame.image.load('images/treefarm.png').convert_alpha(),
                            'minetime': TEN_SEC,
                            'minegives': {'stone': 10,
                                          'wood': 20,
@@ -195,7 +195,7 @@ RESOURCES = {
                            'produces': {'wood': 1},
                            'upkeep': {'workers': 1},
                            'frequency': TEN_SEC},
-             'prospector': {'symbol': "Pr",
+             'prospector': {'image': pygame.image.load('images/miner.png').convert_alpha(),
                             'minetime': 5*ONE_SEC,
                             'minegives': {'iron': 5,
                                           'stone': 10,
@@ -656,12 +656,15 @@ def text_objects(text, font, color=BLACK, bg=None):
 
 
 class Log(object):
-    def __init__(self, log_dicts=None):
+    def __init__(self):
         self.text_lines = []
-        self.surf = None
-        if log_dicts:
-            for log_dict in log_dicts:
-                self.add_line(TextLine(**log_dict))
+        self.__surf = None
+
+    @property
+    def surf(self):
+        if self.__surf is None:
+            self.make_surf()
+        return self.__surf
 
     def add_line(self, textline):
         self.text_lines.append(textline)
@@ -670,11 +673,12 @@ class Log(object):
         self.make_surf()
 
     def make_surf(self):
-        self.surf = ToolTip(self.text_lines)
+        self.__surf = ToolTip(self.text_lines)
 
-    def export(self):
-        log_lines = [text_line.export() for text_line in self.text_lines]
-        return log_lines
+    def clean(self):
+        self.__surf = None
+        for line in self.text_lines:
+            line.clean()
 
 
 log = Log()
@@ -704,8 +708,16 @@ class Player(object):
         self.usables = {'food': {'gives': {'energy': 20},
                                  'costs': {'food': 1}}}
         self.rates = {}
+        # dropbuffs = {'res': {'gives':{'thing': 0}...,'minecosts': {'thing': 0}}...}
+        self.dropbuffs = {}
+        for key1 in RESOURCES:
+            self.dropbuffs[key1] = {'minegives': {}, 'minecosts': {}}
+            for key2 in RESOURCES[key1]['minegives']:
+                self.dropbuffs[key1]['minegives'][key2] = 0
+            for key2 in RESOURCES[key1]['minecosts']:
+                self.dropbuffs[key1]['minecosts'][key2] = 0
 
-    def get_perk(self, id, game):
+    def get_perk(self, id):
         if 'knowledge' in PERKS[id]:
             if 'recipes' in PERKS[id]['knowledge']:
                 for recipe in PERKS[id]['knowledge']['recipes']:
@@ -719,7 +731,7 @@ class Player(object):
             if mine_gives is not None:
                 for bonus in mine_gives:
                     for thing in mine_gives[bonus]:
-                        game.dropbuffs[bonus]['minegives'][thing] += mine_gives[bonus][thing]
+                        self.dropbuffs[bonus]['minegives'][thing] += mine_gives[bonus][thing]
 
             if mine_time is not None:
                 for bonus in mine_time:
@@ -727,6 +739,12 @@ class Player(object):
                         self.rates[bonus] = mine_time[bonus]
                     else:
                         self.rates[bonus] = self.rates[bonus]*mine_time[bonus]
+
+    def buffedgives(self, res):
+        gives = {}
+        for key, value in RESOURCES[res]['minegives'].items():
+            gives[key] = int(value*(1+self.dropbuffs[res]['minegives'][key]))
+        return gives
 
     def learn_recipe(self, thing):
         self.recipes[thing] = ALL_RECIPES[thing]
@@ -796,24 +814,24 @@ class TextLine(object):
         self.font_string = font
         self.bg = bg
         self.return_val = return_val
-        self.font = FONTS[font]
-        self.surf, self.rect = text_objects(string, self.font, color, bg)
+        self.font = font
+        self.__surf, self.rect = text_objects(self.string, FONTS[self.font], self.color, self.bg)
         self.tooltip = None
+
+    @property
+    def surf(self):
+        if self.__surf is None:
+            self.__surf, self.rect = text_objects(self.string, FONTS[self.font], self.color, self.bg)
+        return self.__surf
 
     def check_mouseover(self, relmouse):
         if ((self.rect.x + self.rect.w > relmouse[0] > self.rect.x
              and self.rect.y + self.rect.h > relmouse[1] > self.rect.y)):
             return True
 
-    def export(self):
-        definition = {
-                      'string': self.string,
-                      'color': self.color,
-                      'font': self.font_string,
-                      'bg': self.bg,
-                      'return_val': self.return_val,
-                     }
-        return definition
+    def clean(self):
+        self.__surf = None
+        self.tooltip = None
 
 
 class ToolTip(pygame.Surface):
@@ -852,7 +870,7 @@ class Tile(pygame.Rect):
         self.map: Map = map
         self.type = type
         self.color = TILE_INFO[type]['color']
-        self.surf = pygame.Surface((TILE_WIDTH, TILE_HEIGHT))
+        self.__surf = None
         self.resource = None
         self.resource_dict = None
         self.mine_costs = None
@@ -872,8 +890,14 @@ class Tile(pygame.Rect):
         self.status = None
         self.status_square = None
         self.timer = None
-        self.tooltip = None
+        self.__tooltip = None
         self.redraw()
+
+    @property
+    def surf(self):
+        if self.__surf is None:
+            self.redraw()
+        return self.__surf
 
     def tick(self):
         if self.timer:
@@ -889,7 +913,7 @@ class Tile(pygame.Rect):
                 self.timer = None
             self.redraw()
 
-    def spawn(self, game, force=False):
+    def spawn(self, force=False):
         if len(TILE_INFO[self.type]['can_spawn'].items()) > 0 or force:
             res_list = []
             for key, value in TILE_INFO[self.type]['can_spawn'].items():
@@ -905,9 +929,9 @@ class Tile(pygame.Rect):
                 else:
                     self.image = self.resource_dict['image']
                 self.redraw()
-                self.set_tooltip(game)
+                self.set_tooltip()
 
-    def begin_build(self, res, game):
+    def begin_build(self, res):
         self.resource = res
         self.resource_dict = RESOURCES[res]
         self.mine_costs = self.resource_dict['minecosts']
@@ -923,13 +947,13 @@ class Tile(pygame.Rect):
         for key, value in BUILDABLES[res]['buildcosts'].items():
             player.adjust_inventory(key, -value)
         action = self.finish_build
-        action_dict = {'game': game}
+        action_dict = {}
         self.timer = Timer(BUILDABLES[res]['buildtime'], action, action_dict)
         self.status = 'building'
         self.status_square = StatusSquare(self.w, self.h, WHITE)
         self.redraw()
 
-    def finish_build(self, game):
+    def finish_build(self):
         beds = self.resource_dict.get('beds', 0)
         self.map.beds += beds
         self.beds += beds
@@ -940,16 +964,16 @@ class Tile(pygame.Rect):
         self.recruit_cost = self.resource_dict.get('recruitcost', 0)
         if self.produces or self.gathers or self.upkeep:
             action = self.begin_work
-            action_dict = {'game': game}
+            action_dict = {}
             self.timer = Timer(ONE_SEC, action, action_dict)
             self.status = 'starting production'
         else:
             self.status = None
         self.status_square = None
         self.redraw()
-        self.set_tooltip(game)
+        self.set_tooltip()
 
-    def begin_work(self, game):
+    def begin_work(self):
         if self.upkeep is None or self.can_work():
             if self.status in ['not producing', 'disabled', 'starting production']:
                 if self.population > 0:
@@ -966,7 +990,7 @@ class Tile(pygame.Rect):
                     else:
                         player.adjust_inventory(key, -value)
             action = self.finish_work
-            action_dict = {'game': game}
+            action_dict = {}
             self.timer = Timer(self.frequency, action, action_dict)
             self.status = 'producing'
         else:
@@ -974,13 +998,13 @@ class Tile(pygame.Rect):
                 self.map.available_workers -= self.population
                 self.map.available_power -= self.max_power
             action = self.begin_work
-            action_dict = {'game': game}
+            action_dict = {}
             self.timer = Timer(self.frequency, action, action_dict)
             self.status = 'not producing'
         self.redraw()
-        self.set_tooltip(game)
+        self.set_tooltip()
 
-    def finish_work(self, game):
+    def finish_work(self):
         if self.upkeep:
             if 'workers' in self.upkeep:
                 self.map.available_workers += self.upkeep['workers']
@@ -1002,7 +1026,7 @@ class Tile(pygame.Rect):
                             if ((self.map.tiles[grid_y][grid_x].resource in self.gathers
                                  and self.map.tiles[grid_y][grid_x].status != 'mined')):
                                 worked = self.map.tiles[grid_y][grid_x].resource
-                                self.map.tiles[grid_y][grid_x].begin_mine(game, manual=False)
+                                self.map.tiles[grid_y][grid_x].begin_mine(manual=False)
                                 break
                     if worked:
                         break
@@ -1023,18 +1047,18 @@ class Tile(pygame.Rect):
                     rate = 1
                 ticks = int(RESOURCES[worked]['minetime']*rate)
             action = self.finish_work
-            action_dict = {'game': game}
+            action_dict = {}
             self.timer = Timer(ticks, action, action_dict)
         else:
             if self.status == 'producing':
                 self.map.available_workers -= self.population
                 self.map.available_power -= self.max_power
             action = self.begin_work
-            action_dict = {'game': game}
+            action_dict = {}
             self.timer = Timer(self.frequency, action, action_dict)
             self.status = 'not producing'
         self.redraw()
-        self.set_tooltip(game)
+        self.set_tooltip()
 
     def can_work(self):
         will_work = True
@@ -1059,7 +1083,7 @@ class Tile(pygame.Rect):
                     is_minable = False
         return is_minable
 
-    def begin_mine(self, game, manual=True):
+    def begin_mine(self, manual=True):
         if self.beds > 0:
             self.map.beds -= self.beds
             self.beds = 0
@@ -1083,7 +1107,7 @@ class Tile(pygame.Rect):
                 for key, value in self.mine_costs.items():
                     player.adjust_inventory(key, -value)
             action = self.finish_mine
-            action_dict = {'game': game}
+            action_dict = {}
             if self.resource in player.rates:
                 rate = player.rates[self.resource]
             else:
@@ -1093,8 +1117,8 @@ class Tile(pygame.Rect):
             self.status_square = StatusSquare(self.w, self.h, WHITE)
             self.redraw()
 
-    def finish_mine(self, game):
-        for key, value in game.buffedgives(self.resource).items():
+    def finish_mine(self):
+        for key, value in player.buffedgives(self.resource).items():
             player.adjust_inventory(key, value)
             text = '{:,}'.format(value)+' '+get_name(key, value, False)+' added'
             log.add_line(TextLine(text))
@@ -1112,9 +1136,9 @@ class Tile(pygame.Rect):
         self.status_square = None
         self.timer = None
         self.redraw()
-        self.set_tooltip(game)
+        self.set_tooltip()
 
-    def disable(self, game):
+    def disable(self):
         if self.status == 'producing':
             if self.upkeep:
                 self.map.available_workers += self.upkeep.get('workers', 0)
@@ -1126,24 +1150,30 @@ class Tile(pygame.Rect):
         self.status_square = None
         self.timer = None
         self.redraw()
-        self.set_tooltip(game)
+        self.set_tooltip()
 
-    def enable(self, game):
+    def enable(self):
         action = self.begin_work
-        action_dict = {'game': game}
+        action_dict = {}
         self.timer = Timer(self.frequency, action, action_dict)
         self.status = 'not producing'
         self.redraw()
-        self.set_tooltip(game)
+        self.set_tooltip()
 
-    def set_tooltip(self, game):
+    @property
+    def tooltip(self):
+        if self.__tooltip is None:
+            self.set_tooltip()
+        return self.__tooltip
+
+    def set_tooltip(self):
         text_list = [TextLine(TILE_INFO[self.type]['name'] + ' tile')]
         if self.resource is not None:
             text_list.append(TextLine(''))
             text_list.append(TextLine('Has ' + ITEMS[self.resource]['lower']))
             text_list.append(TextLine(''))
             text_list.append(TextLine('Gives:'))
-            for key, value in game.buffedgives(self.resource).items():
+            for key, value in player.buffedgives(self.resource).items():
                 text = '  ' + ITEMS[key]['i_cap'] + ' (' + '{:,}'.format(value) + ')'
                 text_list.append(TextLine(text))
             if self.mine_costs is not None:
@@ -1165,9 +1195,9 @@ class Tile(pygame.Rect):
         if self.status is not None:
             text_list.append(TextLine(''))
             text_list.append(TextLine('status: '+self.status))
-        self.tooltip = ToolTip(text_list, BLACK)
+        self.__tooltip = ToolTip(text_list, BLACK)
 
-    def doclick(self, event, game):
+    def doclick(self, event):
         if event.button == 1:
             if self.mine_costs:
                 for key, value in self.mine_costs.items():
@@ -1180,11 +1210,11 @@ class Tile(pygame.Rect):
             if self.resource and self.status not in ['mined', 'building'] and self.minable():
                 if RESOURCES[self.resource].get('confirmdestroy', False):
                     if do_confirm_popup(['Are you sure you want', 'to destroy this '+self.resource+'?']):
-                        self.begin_mine(game)
+                        self.begin_mine()
                 else:
-                    self.begin_mine(game)
+                    self.begin_mine()
         elif event.button == 3:
-            if self.resource and self.resource in BUILDABLES:
+            if self.resource and self.resource in BUILDABLES and self.status not in ['building', 'mined']:
                 menu_items = []
                 can_recruit = False
                 can_destroy = False
@@ -1195,18 +1225,19 @@ class Tile(pygame.Rect):
                         can_recruit = True
                     else:
                         color1 = GREY
-                    if self.resource and self.status not in ['mined', 'building'] and self.minable():
-                        color2 = BLACK
-                        can_destroy = True
-                    else:
-                        color2 = GREY
                     menu_items.append(TextLine('Recruit worker ('+str(self.recruit_cost)+' Coins)',
                                                color1, return_val='recruit'))
-                    menu_items.append(TextLine('Destroy ', color2, return_val='destroy'))
-                if self.status != 'disabled':
-                    menu_items.append(TextLine('Disable ', return_val='disable'))
+                if self.minable():
+                    color2 = BLACK
+                    can_destroy = True
                 else:
-                    menu_items.append(TextLine('Enable ', return_val='enable'))
+                    color2 = GREY
+                menu_items.append(TextLine('Destroy ', color2, return_val='destroy'))
+                if self.frequency:
+                    if self.status != 'disabled':
+                        menu_items.append(TextLine('Disable ', return_val='disable'))
+                    else:
+                        menu_items.append(TextLine('Enable ', return_val='enable'))
                 # Make all choice rects extend to end of menu so you don't have to click the text
                 max_width = max(item.rect.w for item in menu_items)
                 for item in menu_items:
@@ -1254,17 +1285,17 @@ class Tile(pygame.Rect):
                         if RESOURCES[self.resource].get('confirmdestroy', False):
                             if do_confirm_popup(
                                     ['Are you sure you want', 'to destroy this ' + self.resource + '?']):
-                                self.begin_mine(game)
+                                self.begin_mine()
                         else:
-                            self.begin_mine(game)
+                            self.begin_mine()
                 elif selection == 'enable':
-                    self.enable(game)
+                    self.enable()
                 elif selection == 'disable':
-                    self.disable(game)
+                    self.disable()
             elif not self.resource:
-                self.spawn(game, force=True)
+                self.spawn(force=True)
             self.redraw()
-            self.set_tooltip(game)
+            self.set_tooltip()
 
     def check_mouseover(self, mouse):
         if ((self.x + self.w > mouse[0] > self.x
@@ -1275,32 +1306,46 @@ class Tile(pygame.Rect):
         return [self.x, self.y, self.w, self.h]
 
     def redraw(self):
+        self.__surf = pygame.Surface((TILE_WIDTH, TILE_HEIGHT))
         bg_color = self.color
         if self.status == 'disabled':
             bg_color = RED
-        pygame.draw.rect(self.surf, bg_color, (self.surf.get_rect()))
+        pygame.draw.rect(self.__surf, bg_color, (self.__surf.get_rect()))
         if self.resource:
             if self.symbol:
                 self.text_surf, self.text_rect = text_objects(self.symbol, FONTS['45'])
-                self.text_rect.center = self.surf.get_rect().center
-                self.surf.blit(self.text_surf, self.text_rect)
+                self.text_rect.center = self.__surf.get_rect().center
+                self.__surf.blit(self.text_surf, self.text_rect)
             elif self.image:
-                self.surf.blit(self.image, (0, 0))
-            if self.beds == 4:
-                pygame.draw.circle(self.surf, BLACK, (8, TILE_HEIGHT-7), 5, min(1, max(0, 1-self.population)))
-                pygame.draw.circle(self.surf, BLACK, (19, TILE_HEIGHT-7), 5, min(1, max(0, 2-self.population)))
-                pygame.draw.circle(self.surf, BLACK, (31, TILE_HEIGHT-7), 5, min(1, max(0, 3-self.population)))
-                pygame.draw.circle(self.surf, BLACK, (42, TILE_HEIGHT-7), 5, min(1, max(0, 4-self.population)))
+                if self.beds > 0:
+                    if self.population == 0:
+                        self.__surf.blit(pygame.image.load('images/house0.png').convert_alpha(), (0, 0))
+                    elif self.population == 1:
+                        self.__surf.blit(pygame.image.load('images/house1.png').convert_alpha(), (0, 0))
+                    elif self.population == 2:
+                        self.__surf.blit(pygame.image.load('images/house2.png').convert_alpha(), (0, 0))
+                    elif self.population == 3:
+                        self.__surf.blit(pygame.image.load('images/house3.png').convert_alpha(), (0, 0))
+                    elif self.population == 4:
+                        self.__surf.blit(pygame.image.load('images/house4.png').convert_alpha(), (0, 0))
+                else:
+                    self.__surf.blit(self.image, (0, 0))
         if self.status_square is not None:
-            self.surf.blit(self.status_square.surf, self.surf.get_rect())
-        pygame.draw.rect(self.surf, BLACK, self.surf.get_rect(), 1)
+            self.__surf.blit(self.status_square.surf, self.__surf.get_rect())
+        pygame.draw.rect(self.__surf, BLACK, self.__surf.get_rect(), 1)
 
     def draw(self, surface):
         surface.blit(self.surf, self.get_rect())
 
+    def clean(self):
+        self.__surf = None
+        self.__tooltip = None
+        if self.status_square:
+            self.status_square.clean()
+
 
 class Map(object):
-    def __init__(self, tilemap, game):
+    def __init__(self, tilemap):
         self.tiles = [[None]*MAP_SIZE for _ in range(MAP_SIZE)]
         self.res_count = 0
         self.beds = 0
@@ -1313,13 +1358,18 @@ class Map(object):
                 if col != '0':
                     self.tiles[y][x] = Tile(x, y, self, col)
         for i in range(10):
-            self.rand_spawn(game)
-        self.surf = pygame.Surface((MAP_SIZE*TILE_WIDTH, MAP_SIZE*TILE_WIDTH))
-        self.make_surf()
-        self.make_thumb()
-        self.make_tooltip()
+            self.rand_spawn()
+        self.__surf = None
+        self.__thumb = None
+        self.__tooltip = None
 
-    def rand_spawn(self, game):
+    @property
+    def surf(self):
+        if self.__surf is None:
+            self.make_surf()
+        return self.__surf
+
+    def rand_spawn(self):
         i = 0
         for y in range(MAP_SIZE):
             for x in range(MAP_SIZE):
@@ -1333,16 +1383,29 @@ class Map(object):
                 x = random.randint(0, MAP_SIZE-1)
                 if self.tiles[y][x].resource is None:
                     spawned = True
-                    self.tiles[y][x].spawn(game)
+                    self.tiles[y][x].spawn()
 
     def make_surf(self):
-        self.surf.fill(WHITE)
+        self.__surf = pygame.Surface((MAP_SIZE * TILE_WIDTH, MAP_SIZE * TILE_WIDTH))
+        self.__surf.fill(WHITE)
         for y in range(MAP_SIZE):
             for x in range(MAP_SIZE):
-                self.tiles[y][x].draw(self.surf)
+                self.tiles[y][x].draw(self.__surf)
+
+    @property
+    def thumb(self):
+        if self.__thumb is None:
+            self.make_thumb()
+        return self.__thumb
 
     def make_thumb(self):
-        self.thumb = pygame.transform.smoothscale(self.surf, (TILE_WIDTH, TILE_HEIGHT))
+        self.__thumb = pygame.transform.smoothscale(self.surf, (TILE_WIDTH, TILE_HEIGHT))
+
+    @property
+    def tooltip(self):
+        if self.__tooltip is None:
+            self.make_tooltip()
+        return self.__tooltip
 
     def make_tooltip(self):
         pop_str = '/'.join(('{:,}'.format(self.available_workers),
@@ -1368,7 +1431,15 @@ class Map(object):
             if res in resource_count:
                 tool_list.append(TextLine(ITEMS[res]['i_cap']+': '+str(resource_count[res])))
 
-        self.tooltip = ToolTip(tool_list, BLACK)
+        self.__tooltip = ToolTip(tool_list, BLACK)
+
+    def clean(self):
+        self.__surf = None
+        self.__thumb = None
+        self.__tooltip = None
+        for row in self.tiles:
+            for tile in row:
+                tile.clean()
 
 
 class Timer(object):
@@ -1393,32 +1464,50 @@ class Timer(object):
 
 class Button(object):
     def __init__(self, w, h, string=None, font_color=BLACK, font='medium', bg_color=WHITE):
-        self.surf = pygame.Surface((w, h))
+        self.__surf = None
+        self.w = w
+        self.h = h
         self.string = string
         self.font_color = font_color
-        self.font = FONTS[font]
+        self.font = font
         self.bg_color = bg_color
         self.rect = self.surf.get_rect()
         self.tooltip = None
         self.make()
         self.tags = []
 
+    @property
+    def surf(self):
+        if self.__surf is None:
+            self.make()
+        return self.__surf
+
     def make(self):
-        self.surf.fill(self.bg_color)
-        pygame.draw.rect(self.surf, BLACK, self.surf.get_rect(), 1)
-        text_surf, text_rect = text_objects(self.string, self.font, self.font_color)
-        text_rect.center = (self.surf.get_rect().centerx, self.surf.get_rect().centery+2)
-        self.surf.blit(text_surf, text_rect)
+        self.__surf = pygame.Surface((self.w, self.h))
+        self.__surf.fill(self.bg_color)
+        pygame.draw.rect(self.__surf, BLACK, self.__surf.get_rect(), 1)
+        text_surf, text_rect = text_objects(self.string, FONTS[self.font], self.font_color)
+        text_rect.center = (self.__surf.get_rect().centerx, self.__surf.get_rect().centery+2)
+        self.__surf.blit(text_surf, text_rect)
+
+    def clean(self):
+        self.__surf = None
 
 
 class BuyMap(object):
     def __init__(self, cost):
         self.cost = cost
-        self.make_surf()
+        self.__surf = None
+
+    @property
+    def surf(self):
+        if self.__surf is None:
+            self.make_surf()
+        return self.__surf
 
     def make_surf(self):
-        self.surf = pygame.Surface((TILE_WIDTH, TILE_HEIGHT))
-        self.surf.fill(GREY)
+        self.__surf = pygame.Surface((TILE_WIDTH, TILE_HEIGHT))
+        self.__surf.fill(GREY)
         lines = [((1, 1), (TILE_WIDTH/4, 1)),
                  ((3*TILE_WIDTH/4, 1), (TILE_WIDTH-2, 1)),
                  ((TILE_WIDTH-2, 1), (TILE_WIDTH-2, TILE_HEIGHT/4)),
@@ -1428,12 +1517,12 @@ class BuyMap(object):
                  ((1, TILE_HEIGHT-2), (1, 3*TILE_HEIGHT/4)),
                  ((1, TILE_HEIGHT/4), (1, 1))]
         for pair in lines:
-            pygame.draw.line(self.surf, BLACK, pair[0], pair[1], 1)
+            pygame.draw.line(self.__surf, BLACK, pair[0], pair[1], 1)
 
         text_surface = FONTS['20'].render('BUY', True, BLACK)
-        text_rect = text_surface.get_rect(center=self.surf.get_rect().center)
+        text_rect = text_surface.get_rect(center=self.__surf.get_rect().center)
         text_rect.bottom = (TILE_HEIGHT/2)-2
-        self.surf.blit(text_surface, text_rect)
+        self.__surf.blit(text_surface, text_rect)
 
     def draw(self, surf, pos, cash_available):
         surf.blit(self.surf, pos)
@@ -1446,10 +1535,13 @@ class BuyMap(object):
         relpos = (text_rect.left + pos[0], text_rect.top + pos[1])
         surf.blit(text_surface, relpos)
 
+    def clean(self):
+        self.__surf = None
+
 
 class Perk(object):
-    def __init__(self, id, game, **kwargs):
-        self.id = id
+    def __init__(self, perk_id, **kwargs):
+        self.id = perk_id
         self.name = kwargs.get('name', None)
         self.cost = kwargs.get('cost', None)
         self.description = kwargs.get('description', None)
@@ -1458,10 +1550,10 @@ class Perk(object):
         self.bonuses = kwargs.get('bonuses', None)
         self.status = 'unavailable'
         self.update_status()
-        self.make_surf()
+        self.__surf = None
         self.rect = self.surf.get_rect(topleft=(PERK_OFFSET+self.pos[0]*(PERK_DIST+PERK_WIDTH),
                                                 PERK_OFFSET+self.pos[1]*(PERK_DIST+PERK_HEIGHT)))
-        self.set_tooltip(game)
+        self.__tooltip = None
 
     def update_status(self):
         if self.status != 'purchased':
@@ -1470,30 +1562,36 @@ class Perk(object):
             elif self.dependencies is None or set(self.dependencies).issubset(player.perks):
                 self.status = 'available'
 
-    def do_click(self, game):
+    def do_click(self):
         if self.status == 'available' and player.inventory['coins'] >= self.cost:
             self.status = 'purchased'
             player.adjust_inventory('coins', -self.cost)
             player.perks.append(self.id)
-            player.get_perk(self.id, game)
+            player.get_perk(self.id)
             self.update_status()
 
+    @property
+    def surf(self):
+        if self.__surf is None:
+            self.make_surf()
+        return self.__surf
+
     def make_surf(self):
-        self.surf = pygame.Surface((PERK_WIDTH, PERK_HEIGHT))
-        self.surf.fill(WHITE)
+        self.__surf = pygame.Surface((PERK_WIDTH, PERK_HEIGHT))
+        self.__surf.fill(WHITE)
 
         if self.status == 'purchased':
-            self.surf.fill(LIGHTGREEN)
-            bold_rect = self.surf.get_rect()
+            self.__surf.fill(LIGHTGREEN)
+            bold_rect = self.__surf.get_rect()
             bold_rect.w -= 1
             bold_rect.h -= 1
-            pygame.draw.rect(self.surf, BLACK, bold_rect, 2)
+            pygame.draw.rect(self.__surf, BLACK, bold_rect, 2)
             color = BLACK
         elif self.status == 'available':
-            pygame.draw.rect(self.surf, BLACK, self.surf.get_rect(), 1)
+            pygame.draw.rect(self.__surf, BLACK, self.__surf.get_rect(), 1)
             color = BLACK
         else:
-            pygame.draw.rect(self.surf, GREY, self.surf.get_rect(), 1)
+            pygame.draw.rect(self.__surf, GREY, self.__surf.get_rect(), 1)
             color = GREY
         textlines = get_textlines(self.name, PERK_WIDTH - 10, True, color, '20')
         full_text_rect = pygame.Rect(0, 0, 1, 1)
@@ -1504,13 +1602,18 @@ class Perk(object):
         for textline in textlines:
             textline.rect.top += y_adj
             textline.rect.left += x_adj
-            self.surf.blit(textline.surf, textline.rect)
+            self.__surf.blit(textline.surf, textline.rect)
 
     def draw(self, surface):
         surface.blit(self.surf, self.rect)
 
-    def set_tooltip(self, game):
-        self.tooltip = None
+    @property
+    def tooltip(self):
+        if self.__tooltip is None:
+            self.set_tooltip()
+        return self.__tooltip
+
+    def set_tooltip(self):
         text_list = []
         description_lines = get_textlines(self.description, 200)
         for text in description_lines:
@@ -1532,7 +1635,11 @@ class Perk(object):
             text_color = RED
         text_list.append(TextLine(self.status, text_color))
 
-        self.tooltip = ToolTip(text_list, BLACK)
+        self.__tooltip = ToolTip(text_list, BLACK)
+
+    def clean(self):
+        self.__surf = None
+        self.__tooltip = None
 
 
 def get_textlines(string, margin, centered=True, color=BLACK, font='medium', bg=None):
@@ -1640,11 +1747,11 @@ def do_confirm_popup(texts):
                     return False
 
 
-def all_maps_spawn(maps, game):
+def all_maps_spawn(maps):
     for row in maps:
         for map in row:
             if type(map) is Map:
-                map.rand_spawn(game)
+                map.rand_spawn()
 
 
 def draw_line(surf, pos1, pos2):
@@ -1684,6 +1791,23 @@ def page_select_surf(pages, cur_page, text_surfaces, page_select_rect):
             draw_line(pages_surf, (t[i].rect.right + 15, y), (t[i+1].rect.left, btm))
 
     return pages_surf
+
+
+pages = ['Inventory', 'Use', 'Craft', 'Build', 'Perks']
+
+i = 45
+page_surfaces = []
+page_select_rect = pygame.Rect(0, 0, 1, 1)
+for page in pages:
+    textline = TextLine(page)
+    page_surfaces.append(textline)
+    textline.rect.x = i
+    page_select_rect = page_select_rect.union(textline)
+    i += textline.rect.w + 30
+
+page_select_surfs = {}
+for page in pages:
+    page_select_surfs[page] = page_select_surf(pages, page, page_surfaces, page_select_rect)
 
 
 def do_crafting_popup(item):
@@ -1744,7 +1868,7 @@ def do_crafting_popup(item):
         pygame.display.flip()
 
 
-def do_build_popup(item, cur_map, game):
+def do_build_popup(item, cur_map):
     gamecopy = pygame.Surface((DISPLAY_WIDTH, DISPLAY_HEIGHT))
     gamecopy.blit(gameDisplay, (0, 0))
     greyout = pygame.Surface((DISPLAY_WIDTH, DISPLAY_HEIGHT))
@@ -1799,7 +1923,7 @@ def do_build_popup(item, cur_map, game):
                 quit()
             if event.type == pygame.MOUSEBUTTONUP:
                 if can_build:
-                    tile.begin_build(item, game)
+                    tile.begin_build(item)
                     in_menu = False
                 if xrect.collidepoint(menu_mouse):
                     in_menu = False
@@ -2110,19 +2234,16 @@ def pause_screen():
                 if continue_button.rect.collidepoint(game_mouse):
                     in_menu = False
                 if save_button.rect.collidepoint(game_mouse):
-                    # with open('save.pickle', 'wb+') as f:
-                    #     pickle.dump(log.export(), f)
-                    #     pickle.dump(player, f)
-                    #     pickle.dump(game, f)
-                    # log.add_line(TextLine('game saved', GREEN))
+                    with open('save.pickle', 'wb+') as f:
+                        log.clean()
+                        pickle.dump(log, f)
+                        pickle.dump(player, f)
+                        game.clean()
+                        pickle.dump(game, f)
+                    log.add_line(TextLine('game saved', GREEN))
                     in_menu = False
                 if load_button.rect.collidepoint(game_mouse):
-                    # with open('save.pickle', 'rb') as f:
-                    #     log_lines = pickle.load(f)
-                    #     log = Log(log_lines)
-                    #     player = pickle.load(f)
-                    #     game = pickle.load(f)
-                    # target = 'load'
+                    target = 'load'
                     in_menu = False
                 if menu_button.rect.collidepoint(game_mouse):
                     target = 'start'
@@ -2133,8 +2254,19 @@ def pause_screen():
     return target
 
 
+def load_game():
+    global player
+    global log
+    global game
+    with open('save.pickle', 'rb') as f:
+        log = pickle.load(f)
+        player = pickle.load(f)
+        # game = pickle.load(f)
+    game.main()
+
+
 class Game(object):
-    def __init__(self, cheats=False, save_file=None):
+    def __init__(self, cheats=False):
         self.mouse = pygame.mouse.get_pos()
         self.game_mouse = get_rel_mouse(self.mouse, gameArea)
         self.map_mouse = get_rel_mouse(self.mouse, mapArea)
@@ -2152,20 +2284,9 @@ class Game(object):
         self.eat_button = Button(40, 20, 'Eat')
         self.eat_button.rect = self.eat_button.surf.get_rect(topleft=(325, 15))
 
-        self.pages = ['Inventory', 'Use', 'Craft', 'Build', 'Perks']
-        self.cur_page = self.pages[0]
+        self.cur_page = pages[0]
 
         self.exclude = ['energy', 'coins']
-
-        i = 45
-        self.page_surfaces = []
-        self.page_select_rect = pygame.Rect(0, 0, 1, 1)
-        for page in self.pages:
-            textline = TextLine(page)
-            self.page_surfaces.append(textline)
-            textline.rect.x = i
-            self.page_select_rect = self.page_select_rect.union(textline)
-            i += textline.rect.w + 30
 
         self.recipe_surfaces = get_recipe_surfs()
         self.usables_surfaces = get_usables_surfs()
@@ -2187,7 +2308,7 @@ class Game(object):
                 PERKS[perk]['pos'] = (k, perk_grid_y)
             last_j = j
 
-            self.perks.append(Perk(perk, self, **PERKS[perk]))
+            self.perks.append(Perk(perk, **PERKS[perk]))
             perk_max_x = max(perk_max_x, PERK_OFFSET+(PERKS[perk]['pos'][0]+1)*(PERK_DIST+PERK_WIDTH))
             perk_max_y = max(perk_max_y, PERK_OFFSET+(PERKS[perk]['pos'][1]+1)*(PERK_DIST+PERK_HEIGHT))
 
@@ -2195,10 +2316,7 @@ class Game(object):
 
         make_perk_surf(self.perk_window.full_surf, self.perks, self.perk_mouse)
 
-        self.page_select_surfs = {}
-        for page in self.pages:
-            self.page_select_surfs[page] = page_select_surf(self.pages, page, self.page_surfaces, self.page_select_rect)
-        self.page_select_surf = self.page_select_surfs[self.pages[0]]
+        self.page_select_surf = page_select_surfs[pages[0]]
 
         self.tooltip = None
 
@@ -2218,15 +2336,6 @@ class Game(object):
             player.adjust_inventory('food', 100000)
             player.adjust_inventory('coins', 100000)
 
-        # dropbuffs = {'res': {'gives':{'thing': 0}...,'minecosts': {'thing': 0}}...}
-        self.dropbuffs = {}
-        for key1 in RESOURCES:
-            self.dropbuffs[key1] = {'minegives': {}, 'minecosts': {}}
-            for key2 in RESOURCES[key1]['minegives']:
-                self.dropbuffs[key1]['minegives'][key2] = 0
-            for key2 in RESOURCES[key1]['minecosts']:
-                self.dropbuffs[key1]['minecosts'][key2] = 0
-
         self.maps = [[None]*MAP_SIZE for _ in range(MAP_SIZE)]
         self.maps[4][4] = BuyMap(0)
         self.buy_map((4, 4))
@@ -2242,7 +2351,7 @@ class Game(object):
             energy_timer = Timer(ONE_SEC, player.adjust_inventory, {'item': 'energy', 'amt': 100}, True)
         self.timers = [
                        energy_timer,
-                       Timer(5*ONE_SEC, all_maps_spawn, {'maps': self.maps, 'game': self}, True),
+                       Timer(5*ONE_SEC, all_maps_spawn, {'maps': self.maps}, True),
                        Timer(int(ONE_SEC/20), self.update_map_surf, {}, True),
                        Timer(int(ONE_SEC/10), self.update_map_thumbs, {}, True),
                        Timer(ONE_SEC, self.update_item_history, {}, True)
@@ -2267,12 +2376,6 @@ class Game(object):
 
     def unflash_energy_bar(self):
         self.energy_bar_flash = False
-
-    def buffedgives(self, res):
-        gives = {}
-        for key, value in RESOURCES[res]['minegives'].items():
-            gives[key] = int(value*(1+self.dropbuffs[res]['minegives'][key]))
-        return gives
 
     def update_map_surf(self):
         self.cur_map.make_surf()
@@ -2342,7 +2445,7 @@ class Game(object):
             else:
                 tilemap = tilemaps.tilemap16
 
-            self.maps[grid_pos[1]][grid_pos[0]] = Map(tilemap, self)
+            self.maps[grid_pos[1]][grid_pos[0]] = Map(tilemap)
             for rel_pos in adjacent_maps:
                 pos = (grid_pos[0]+rel_pos[0], grid_pos[1]+rel_pos[1])
                 if 0 <= pos[0] <= 8 and 0 <= pos[1] <= 8 and self.maps[pos[1]][pos[0]] is None:
@@ -2357,6 +2460,27 @@ class Game(object):
             win.v_sb.top = min(win.view_size[1]-win.v_sb.h,
                                max(0, win.start_y-(win.start_mouse[1]-rel_mouse[1])))
             win.ypos = win.v_sb.top/(win.view_size[1]-win.v_sb_size)*(win.full_size[1]-win.view_size[1])
+
+    def clean(self):
+        self.energy_text.clean()
+        self.eat_button.clean()
+        for surf in self.recipe_surfaces:
+            surf.clean()
+        for surf in self.usables_surfaces:
+            surf.clean()
+        for surf in self.build_surfaces:
+            surf.clean()
+        for surf in self.sell_buttons:
+            surf.clean()
+        for perk in self.perks:
+            perk.clean()
+        self.perk_window.clean()
+        self.page_select_surf = None
+        for row in self.maps:
+            for tmap in row:
+                if tmap is not None:
+                    tmap.clean()
+        self.cur_map.clean()
 
     def drawgame(self):
         coins_str = '{:,}'.format(player.inventory['coins'])
@@ -2387,7 +2511,7 @@ class Game(object):
             for y in range(MAP_SIZE):
                 for x in range(MAP_SIZE):
                     if self.cur_map.tiles[y][x].collidepoint(self.map_mouse):
-                        self.cur_map.tiles[y][x].set_tooltip(self)
+                        self.cur_map.tiles[y][x].set_tooltip()
                         tooltip = self.cur_map.tiles[y][x].tooltip
                         if self.cur_map.tiles[y][x].work_radius is not None:
                             draw_radius_pos = (x, y)
@@ -2541,7 +2665,7 @@ class Game(object):
             if self.perk_window.view_surf.get_rect(topleft=perkArea.get_abs_offset()).collidepoint(self.mouse):
                 for perk in self.perks:
                     if perk.rect.collidepoint(rel_mouse):
-                        perk.set_tooltip(self)
+                        perk.set_tooltip()
                         tooltip = perk.tooltip
             make_perk_surf(self.perk_window.full_surf, self.perks, rel_mouse)
             self.perk_window.draw(perkArea, (0, 0))
@@ -2556,6 +2680,7 @@ class Game(object):
 
     def main(self):
         restart = False
+        target = None
         while not restart:
             mouse = self.mouse
             game_mouse = self.game_mouse
@@ -2567,8 +2692,9 @@ class Game(object):
                     quit()
                 if event.type == pygame.KEYUP and event.key == pygame.K_SPACE:
                     target = pause_screen()
-                    if target == 'start':
+                    if target in ['start', 'load']:
                         restart = True
+                    self.page_select_surf = page_select_surfs[self.cur_page]
                 if event.type == GAME_TICK:
                     for i, timer in enumerate(self.timers):
                         if timer.tick() == 'done':
@@ -2617,7 +2743,7 @@ class Game(object):
                         for y in range(MAP_SIZE):
                             for x in range(MAP_SIZE):
                                 if self.cur_map.tiles[y][x].check_mouseover(map_mouse):
-                                    self.cur_map.tiles[y][x].doclick(event, self)
+                                    self.cur_map.tiles[y][x].doclick(event)
 
                     if event.button == 1:
                         if self.eat_button.rect.collidepoint(mouse):
@@ -2632,7 +2758,8 @@ class Game(object):
                             for button in self.sell_buttons:
                                 if button.rect.collidepoint(mouse):
                                     player.adjust_inventory(button.tags[0], - int(button.string))
-                                    player.adjust_inventory('coins', ITEMS[button.tags[0]]['sell_value']*int(button.string))
+                                    player.adjust_inventory('coins',
+                                                            ITEMS[button.tags[0]]['sell_value']*int(button.string))
 
                         elif self.cur_page == 'Craft':
                             for recipe in self.recipe_surfaces:
@@ -2653,7 +2780,7 @@ class Game(object):
                                 if buildsurf.check_mouseover(mouse) and player.buildable(buildsurf.string):
                                     self.map_view = False
                                     self.drawgame()
-                                    do_build_popup(buildsurf.string, self.cur_map, self)
+                                    do_build_popup(buildsurf.string, self.cur_map)
 
                         elif self.cur_page == 'Perks':
                             self.perk_window.moving_h = False
@@ -2662,14 +2789,14 @@ class Game(object):
                                 rel_mouse = (perk_mouse[0]+self.perk_window.xpos, perk_mouse[1]+self.perk_window.ypos)
                                 for perk in self.perks:
                                     if perk.rect.collidepoint(rel_mouse):
-                                        perk.do_click(self)
+                                        perk.do_click()
 
-                        for i, page in enumerate(self.page_surfaces):
+                        for i, page in enumerate(page_surfaces):
                             pagemouse = (mouse[0] - GAME_WIDTH - 60,
                                          mouse[1] - GAME_OFFSET[1] + self.page_select_surf.get_rect().h)
                             if page.check_mouseover(pagemouse):
-                                self.cur_page = self.pages[i]
-                                self.page_select_surf = self.page_select_surfs[self.cur_page]
+                                self.cur_page = pages[i]
+                                self.page_select_surf = page_select_surfs[self.cur_page]
 
             for thing in self.perks:
                 thing.update_status()
@@ -2678,7 +2805,10 @@ class Game(object):
                 perk_mouse = get_rel_mouse(mouse, perkArea)
                 self.scroll_window(self.perk_window, perk_mouse)
             self.drawgame()
-        start_screen()
+        if target == 'start':
+            start_screen()
+        elif target == 'load':
+            load_game()
 
 
 if __name__ == '__main__':
