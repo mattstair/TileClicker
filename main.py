@@ -821,7 +821,7 @@ class TextLine(object):
     @property
     def surf(self):
         if self.__surf is None:
-            self.__surf, self.rect = text_objects(self.string, FONTS[self.font], self.color, self.bg)
+            self.__surf, rect = text_objects(self.string, FONTS[self.font], self.color, self.bg)
         return self.__surf
 
     def check_mouseover(self, relmouse):
@@ -862,17 +862,17 @@ class ToolTip(pygame.Surface):
         surface.blit(self, new_pos)
 
 
-class Tile(pygame.Rect):
-    def __init__(self, x, y, map, type='g'):
-        super().__init__(x*TILE_WIDTH, y*TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT)
+class Tile(object):
+    def __init__(self, x, y, owner_map, tile_type='g'):
         self.grid_x = x
         self.grid_y = y
-        self.map: Map = map
-        self.type = type
-        self.color = TILE_INFO[type]['color']
+        self.map: Map = owner_map
+        self.type = tile_type
+        self.color = TILE_INFO[tile_type]['color']
         self.__surf = None
+        self.__rect = None
         self.resource = None
-        self.resource_dict = None
+        self.__resource_dict = None
         self.mine_costs = None
         self.beds = 0
         self.population = 0
@@ -886,18 +886,35 @@ class Tile(pygame.Rect):
         self.text_rect = None
         self.text_surf = None
         self.symbol = None
-        self.image = None
+        self.__image = None
         self.status = None
         self.status_square = None
         self.timer = None
         self.__tooltip = None
-        self.redraw()
+
+    @property
+    def rect(self):
+        if self.__rect is None:
+            self.__rect = pygame.Rect(self.grid_x*TILE_WIDTH, self.grid_y*TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT)
+        return self.__rect
 
     @property
     def surf(self):
         if self.__surf is None:
             self.redraw()
         return self.__surf
+
+    @property
+    def resource_dict(self):
+        if self.__resource_dict is None:
+            self.__resource_dict = RESOURCES[self.resource]
+        return self.__resource_dict
+
+    @property
+    def image(self):
+        if self.__image is None:
+            self.__image = RESOURCES[self.resource]['image']
+        return self.__image
 
     def tick(self):
         if self.timer:
@@ -922,18 +939,18 @@ class Tile(pygame.Rect):
             res = random.choice(res_list)
             if res != 'none':
                 self.resource = res
-                self.resource_dict = RESOURCES[res]
+                self.__resource_dict = RESOURCES[res]
                 self.mine_costs = self.resource_dict['minecosts']
                 if 'symbol' in self.resource_dict:
                     self.symbol = self.resource_dict['symbol']
                 else:
-                    self.image = self.resource_dict['image']
+                    self.__image = self.resource_dict['image']
                 self.redraw()
                 self.set_tooltip()
 
     def begin_build(self, res):
         self.resource = res
-        self.resource_dict = RESOURCES[res]
+        self.__resource_dict = RESOURCES[res]
         self.mine_costs = self.resource_dict['minecosts']
         self.produces = self.resource_dict.get('produces', None)
         self.gathers = self.resource_dict.get('gathers', None)
@@ -943,14 +960,14 @@ class Tile(pygame.Rect):
         if 'symbol' in self.resource_dict:
             self.symbol = self.resource_dict['symbol']
         else:
-            self.image = self.resource_dict['image']
+            self.__image = self.resource_dict['image']
         for key, value in BUILDABLES[res]['buildcosts'].items():
             player.adjust_inventory(key, -value)
         action = self.finish_build
         action_dict = {}
         self.timer = Timer(BUILDABLES[res]['buildtime'], action, action_dict)
         self.status = 'building'
-        self.status_square = StatusSquare(self.w, self.h, WHITE)
+        self.status_square = StatusSquare(self.rect.w, self.rect.h, WHITE)
         self.redraw()
 
     def finish_build(self):
@@ -1114,7 +1131,7 @@ class Tile(pygame.Rect):
                 rate = 1
             ticks = int(RESOURCES[self.resource]['minetime']*rate)
             self.timer = Timer(ticks, action, action_dict)
-            self.status_square = StatusSquare(self.w, self.h, WHITE)
+            self.status_square = StatusSquare(self.rect.w, self.rect.h, WHITE)
             self.redraw()
 
     def finish_mine(self):
@@ -1123,7 +1140,7 @@ class Tile(pygame.Rect):
             text = '{:,}'.format(value)+' '+get_name(key, value, False)+' added'
             log.add_line(TextLine(text))
         self.resource = None
-        self.resource_dict = None
+        self.__resource_dict = None
         self.mine_costs = None
         self.produces = None
         self.gathers = None
@@ -1131,7 +1148,7 @@ class Tile(pygame.Rect):
         self.upkeep = None
         self.work_radius = None
         self.symbol = None
-        self.image = None
+        self.__image = None
         self.status = None
         self.status_square = None
         self.timer = None
@@ -1298,12 +1315,12 @@ class Tile(pygame.Rect):
             self.set_tooltip()
 
     def check_mouseover(self, mouse):
-        if ((self.x + self.w > mouse[0] > self.x
-             and self.y + self.h > mouse[1] > self.y)):
+        if ((self.rect.x + self.rect.w > mouse[0] > self.rect.x
+             and self.rect.y + self.rect.h > mouse[1] > self.rect.y)):
             return True
 
     def get_rect(self):
-        return [self.x, self.y, self.w, self.h]
+        return [self.rect.x, self.rect.y, self.rect.w, self.rect.h]
 
     def redraw(self):
         self.__surf = pygame.Surface((TILE_WIDTH, TILE_HEIGHT))
@@ -1339,6 +1356,9 @@ class Tile(pygame.Rect):
 
     def clean(self):
         self.__surf = None
+        self.__rect = None
+        self.__resource_dict = None
+        self.__image = None
         self.__tooltip = None
         if self.status_square:
             self.status_square.clean()
@@ -1916,7 +1936,7 @@ def do_build_popup(item, cur_map):
                 target_tile.fill(RED)
             if RESOURCES[item].get('workradius', 0) > 0:
                 draw_radius_surface((xgrid, ygrid), RESOURCES[item]['workradius'])
-            mapArea.blit(target_tile, tile.topleft)
+            mapArea.blit(target_tile, tile.rect.topleft)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -2261,7 +2281,9 @@ def load_game():
     with open('save.pickle', 'rb') as f:
         log = pickle.load(f)
         player = pickle.load(f)
-        # game = pickle.load(f)
+        game = pickle.load(f)
+    game.page_select_surf = page_select_surfs[game.cur_page]
+    game.energy_text.rect.x, game.energy_text.rect.y = 50, 6
     game.main()
 
 
@@ -2359,6 +2381,17 @@ class Game(object):
 
         self.item_history = None
         self.initialize_item_history()
+
+    def __getstate__(self):
+        odict = self.__dict__.copy()
+        del odict['energy_bar']
+        return odict
+
+    def __setstate__(self, state):
+        self.energy_bar = StatusBar(gameDisplay, 200, 15, 100, 20, GREEN, WHITE, BLACK)
+        self.energy_bar.maximum = player.max_energy
+        self.energy_bar.val = player.inventory['energy']
+        self.__dict__.update(state)
 
     def initialize_item_history(self):
         self.item_history = {key: [None] for key in player.inventory}
@@ -2510,7 +2543,7 @@ class Game(object):
         if not self.map_view:
             for y in range(MAP_SIZE):
                 for x in range(MAP_SIZE):
-                    if self.cur_map.tiles[y][x].collidepoint(self.map_mouse):
+                    if self.cur_map.tiles[y][x].rect.collidepoint(self.map_mouse):
                         self.cur_map.tiles[y][x].set_tooltip()
                         tooltip = self.cur_map.tiles[y][x].tooltip
                         if self.cur_map.tiles[y][x].work_radius is not None:
@@ -2525,7 +2558,7 @@ class Game(object):
                 for x, map in enumerate(row):
                     if type(map) is Map:
                         mapArea.blit(map.thumb, (x*TILE_WIDTH, y*TILE_HEIGHT))
-                        if self.cur_map.tiles[y][x].collidepoint(self.map_mouse):
+                        if self.cur_map.tiles[y][x].rect.collidepoint(self.map_mouse):
                             map.make_tooltip()
                             tooltip = map.tooltip
                     elif type(map) is BuyMap:
@@ -2547,7 +2580,7 @@ class Game(object):
                          (DISPLAY_WIDTH - 10, y_start + 500), 2)
         pygame.draw.line(gameDisplay, BLACK, (DISPLAY_WIDTH - 10, y_start + 500),
                          (DISPLAY_WIDTH - 10, y_start - 2), 2)
-        gameDisplay.blit(self.energy_text.surf, self.energy_text)
+        gameDisplay.blit(self.energy_text.surf, self.energy_text.rect)
         gameDisplay.blit(coins_text.surf, coins_text)
         self.energy_bar.draw()
         if self.energy_bar_flash:
@@ -2695,6 +2728,8 @@ class Game(object):
                     if target in ['start', 'load']:
                         restart = True
                     self.page_select_surf = page_select_surfs[self.cur_page]
+                    self.energy_text.rect.x, self.energy_text.rect.y = 50, 6
+
                 if event.type == GAME_TICK:
                     for i, timer in enumerate(self.timers):
                         if timer.tick() == 'done':
