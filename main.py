@@ -883,8 +883,6 @@ class Tile(object):
         self.frequency = None
         self.upkeep = None
         self.work_radius = None
-        self.text_rect = None
-        self.text_surf = None
         self.symbol = None
         self.__image = None
         self.status = None
@@ -1330,9 +1328,9 @@ class Tile(object):
         pygame.draw.rect(self.__surf, bg_color, (self.__surf.get_rect()))
         if self.resource:
             if self.symbol:
-                self.text_surf, self.text_rect = text_objects(self.symbol, FONTS['45'])
-                self.text_rect.center = self.__surf.get_rect().center
-                self.__surf.blit(self.text_surf, self.text_rect)
+                text_surf, text_rect = text_objects(self.symbol, FONTS['45'])
+                text_rect.center = self.__surf.get_rect().center
+                self.__surf.blit(text_surf, text_rect)
             elif self.image:
                 if self.beds > 0:
                     if self.population == 0:
@@ -2289,6 +2287,7 @@ def load_game():
 
 class Game(object):
     def __init__(self, cheats=False):
+        self.cheats = cheats
         self.mouse = pygame.mouse.get_pos()
         self.game_mouse = get_rel_mouse(self.mouse, gameArea)
         self.map_mouse = get_rel_mouse(self.mouse, mapArea)
@@ -2367,12 +2366,8 @@ class Game(object):
         self.tracker = 0
 
         pygame.time.set_timer(GAME_TICK, int(1000//TICKS_PER_SEC))
-        if not cheats:
-            energy_timer = Timer(5*ONE_SEC, player.adjust_inventory, {'item': 'energy', 'amt': 1}, True)
-        else:
-            energy_timer = Timer(ONE_SEC, player.adjust_inventory, {'item': 'energy', 'amt': 100}, True)
         self.timers = [
-                       energy_timer,
+                       Timer(5 * ONE_SEC, self.regen_energy, {}, True),
                        Timer(5*ONE_SEC, all_maps_spawn, {'maps': self.maps}, True),
                        Timer(int(ONE_SEC/20), self.update_map_surf, {}, True),
                        Timer(int(ONE_SEC/10), self.update_map_thumbs, {}, True),
@@ -2392,6 +2387,12 @@ class Game(object):
         self.energy_bar.maximum = player.max_energy
         self.energy_bar.val = player.inventory['energy']
         self.__dict__.update(state)
+
+    def regen_energy(self):
+        if not self.cheats:
+            player.adjust_inventory('energy', 1)
+        else:
+            player.adjust_inventory('energy', 100)
 
     def initialize_item_history(self):
         self.item_history = {key: [None] for key in player.inventory}
