@@ -97,15 +97,15 @@ RESOURCES = {
                       'minegives': {'stone': 1},
                       'minecosts': {'energy': 5}},
              'boulder': {'image': pygame.image.load('images/boulder.png').convert_alpha(),
-                         'minetime': 10*ONE_SEC,
+                         'minetime': TEN_SEC,
                          'minegives': {'stone': 4},
                          'minecosts': {'energy': 20}},
              'irondeposit': {'image': pygame.image.load('images/iron.png').convert_alpha(),
-                             'minetime': 10*ONE_SEC,
+                             'minetime': TEN_SEC,
                              'minegives': {'ironore': 2},
                              'minecosts': {'energy': 20}},
              'golddeposit': {'image': pygame.image.load('images/gold.png').convert_alpha(),
-                             'minetime': 10*ONE_SEC,
+                             'minetime': TEN_SEC,
                              'minegives': {'goldore': 2},
                              'minecosts': {'energy': 20}},
              'fish': {'image': pygame.image.load('images/fish.png').convert_alpha(),
@@ -216,17 +216,17 @@ RESOURCES = {
                                 'powerproduced': 2,
                                 'upkeep': {'wood': 1},
                                 'frequency': 5*ONE_SEC},
-             'electric miner': {'symbol': "EM",
-                                'minetime': 5*ONE_SEC,
-                                'minegives': {'iron': 5,
-                                              'stone': 10,
-                                              'wood': 10},
-                                'minecosts': {'energy': 20},
-                                'confirmdestroy': True,
-                                'gathers': ['boulder', 'irondeposit', 'golddeposit'],
-                                'workradius': 3,
-                                'upkeep': {'power': 1},
-                                'frequency': 5*ONE_SEC},
+             # 'electric miner': {'symbol': "EM",
+             #                    'minetime': 5*ONE_SEC,
+             #                    'minegives': {'iron': 5,
+             #                                  'stone': 10,
+             #                                  'wood': 10},
+             #                    'minecosts': {'energy': 20},
+             #                    'confirmdestroy': True,
+             #                    'gathers': ['boulder', 'irondeposit', 'golddeposit'],
+             #                    'workradius': 3,
+             #                    'upkeep': {'power': 1},
+             #                    'frequency': 5*ONE_SEC},
              'iron mine': {'symbol': "IM",
                            'minetime': TEN_SEC,
                            'minegives': {'stone': 20,
@@ -237,7 +237,7 @@ RESOURCES = {
                            'produces': {'ironore': 1},
                            'upkeep': {'workers': 2,
                                       'power': 1},
-                           'frequency': TEN_SEC},
+                           'frequency': 5*ONE_SEC},
              'gold mine': {'symbol': "GM",
                            'minetime': TEN_SEC,
                            'minegives': {'stone': 20,
@@ -248,7 +248,7 @@ RESOURCES = {
                            'produces': {'goldore': 1},
                            'upkeep': {'workers': 2,
                                       'power': 1},
-                           'frequency': TEN_SEC},
+                           'frequency': 5*ONE_SEC},
              }
 
 ALL_RECIPES = {
@@ -325,13 +325,6 @@ BUILDABLES = {
                                                 'wood': 20,
                                                 'energy': 30},
                                  'buildtime': 5 * ONE_SEC},
-              # 'electric miner': {'description': 'Automatically mines boulders and ores. Uses 1 power. ',
-              #                    'canbuild': ['g', 'r', 's', 'i'],
-              #                    'buildcosts': {'iron': 10,
-              #                                   'stone': 20,
-              #                                   'wood': 20,
-              #                                   'energy': 30},
-              #                    'buildtime': 5 * ONE_SEC},
               'iron mine': {'description': 'Generates 1 iron ore / 10 sec. Needs 2 workers and 1 power. ',
                             'canbuild': ['r'],
                             'buildcosts': {'stone': 40,
@@ -491,10 +484,6 @@ ITEMS = {
                             'lower': 'wood generator',
                             'plural': 'wood generators',
                             'plural_i_cap': 'Wood generators'},
-         # 'electric miner': {'i_cap': 'Electric miner',
-         #                    'lower': 'electric miner',
-         #                    'plural': 'electric miners',
-         #                    'plural_i_cap': 'Electric miners'},
          'iron mine': {'i_cap': 'Iron mine',
                        'lower': 'iron mine',
                        'plural': 'iron mines',
@@ -508,15 +497,25 @@ ITEMS = {
 PERKS = {
          '000': {'name': 'Bonus Stone',
                  'cost': 50,
-                 'description': 'Get 50% more stone from boulders',
+                 'description': 'Get 50% more stone from boulders (additive).',
                  'dependencies': None,
                  'bonuses': {'minegives': {'boulder': {'stone': 0.5}}}},
          '001': {'name': 'Bonuser Stone',
                  'cost': 100,
-                 'description': 'Get 100% more stone from rocks and boulders',
+                 'description': 'Get 100% more stone from rocks and boulders (additive).',
                  'dependencies': ['000'],
                  'bonuses': {'minegives': {'rock': {'stone': 1.0},
                                            'boulder': {'stone': 1.0}}}},
+         '002': {'name': 'Outsourcing',
+                 'cost': 200,
+                 'description': 'Crafting no longer costs Energy.',
+                 'dependencies': ['011'],
+                 'bonuses': {'free crafting': True}},
+         '003': {'name': 'More Outsourcing',
+                 'cost': 200,
+                 'description': 'Building no longer costs Energy.',
+                 'dependencies': ['011'],
+                 'bonuses': {'free building': True}},
          '011': {'name': 'Melting',
                  'cost': 50,
                  'description': 'Learn how to make glass and how to smelt iron and gold.',
@@ -529,19 +528,19 @@ PERKS = {
                  'knowledge': {'buildings': ['prospector']}},
          '013': {'name': 'Better mining',
                  'cost': 100,
-                 'description': 'Get 50% more stone from boulders and ore when mining.',
+                 'description': 'Get 50% more stone from boulders and ore when mining (additive).',
                  'dependencies': ['012'],
                  'bonuses': {'minegives': {'boulder': {'stone': 0.5},
                                            'irondeposit': {'ironore': 0.5},
                                            'golddeposit': {'goldore': 0.5}}}},
          '021': {'name': 'Power!',
                  'cost': 100,
-                 'description': 'Learn how to build a generator that burns wood. ',
+                 'description': 'Learn how to build a generator that burns wood to create power. ',
                  'dependencies': ['011'],
                  'knowledge': {'buildings': ['wood generator']}},
          '100': {'name': 'Bonus Wood',
                  'cost': 50,
-                 'description': 'Get 50% more wood from trees.',
+                 'description': 'Get 50% more wood from trees (additive).',
                  'dependencies': ['000'],
                  'bonuses': {'minegives': {'tree': {'wood': 0.5}}}},
          '102': {'name': 'People!',
@@ -549,11 +548,6 @@ PERKS = {
                  'description': 'Learn how to build houses. ',
                  'dependencies': ['100'],
                  'knowledge': {'buildings': ['house']}},
-         # '103': {'name': 'Electric Mining',
-         #         'cost': 100,
-         #         'description': 'Learn how to build electric miners. ',
-         #         'dependencies': ['021', '102'],
-         #         'knowledge': {'buildings': ['electric miner']}},
          '113': {'name': 'Forager Hut',
                  'cost': 50,
                  'description': 'Learn how to build forager huts.',
@@ -581,28 +575,28 @@ PERKS = {
                  'knowledge': {'buildings': ['tree farm']}},
          '131': {'name': 'Bonuser Wood',
                  'cost': 100,
-                 'description': 'Get 50% more wood from trees.',
+                 'description': 'Get 50% more wood from trees (additive).',
                  'dependencies': ['100'],
                  'bonuses': {'minegives': {'tree': {'wood': 0.5}}}},
          '141': {'name': 'Faster Wood',
                  'cost': 50,
-                 'description': 'Chop trees 50% faster.',
+                 'description': 'Chop trees 50% faster (multiplicative).',
                  'dependencies': ['100'],
                  'bonuses': {'minetime': {'tree': 0.5}}},
          '142': {'name': 'Fasterer Wood',
                  'cost': 100,
-                 'description': 'Chop trees 50% faster.',
+                 'description': 'Chop trees 50% faster (multiplicative).',
                  'dependencies': ['141'],
                  'bonuses': {'minetime': {'tree': 0.5}}},
          '200': {'name': 'Bonus Ore',
                  'cost': 100,
-                 'description': 'Get 50% more ore from deposits.',
+                 'description': 'Get 50% more ore from deposits (additive).',
                  'dependencies': ['100'],
                  'bonuses': {'minegives': {'golddeposit': {'goldore': 0.5},
                                            'irondeposit': {'ironore': 0.5}}}},
          '201': {'name': 'Bonuser Ore',
                  'cost': 200,
-                 'description': 'Get 100% more ore from deposits.',
+                 'description': 'Get 100% more ore from deposits (additive).',
                  'dependencies': ['200'],
                  'bonuses': {'minegives': {'golddeposit': {'goldore': 1.0},
                                            'irondeposit': {'ironore': 1.0}}}},
@@ -703,7 +697,9 @@ class Player(object):
         self.population = 0
         self.known_items = []
         self.recipes = {}
+        self.free_crafting = False
         self.buildables = {}
+        self.free_building = False
         self.perks = []
         self.usables = {'food': {'gives': {'energy': 20},
                                  'costs': {'food': 1}}}
@@ -717,17 +713,18 @@ class Player(object):
             for key2 in RESOURCES[key1]['minecosts']:
                 self.dropbuffs[key1]['minecosts'][key2] = 0
 
-    def get_perk(self, id):
-        if 'knowledge' in PERKS[id]:
-            if 'recipes' in PERKS[id]['knowledge']:
-                for recipe in PERKS[id]['knowledge']['recipes']:
+    def get_perk(self, perk_id):
+        perk = PERKS[perk_id]
+        if 'knowledge' in perk:
+            if 'recipes' in perk['knowledge']:
+                for recipe in perk['knowledge']['recipes']:
                     self.learn_recipe(recipe)
-            if 'buildings' in PERKS[id]['knowledge']:
-                for building in PERKS[id]['knowledge']['buildings']:
+            if 'buildings' in perk['knowledge']:
+                for building in perk['knowledge']['buildings']:
                     self.learn_building(building)
-        if 'bonuses' in PERKS[id]:
-            mine_gives = PERKS[id]['bonuses'].get('minegives', None)
-            mine_time = PERKS[id]['bonuses'].get('minetime', None)
+        if 'bonuses' in perk:
+            mine_gives = perk['bonuses'].get('minegives', None)
+            mine_time = perk['bonuses'].get('minetime', None)
             if mine_gives is not None:
                 for bonus in mine_gives:
                     for thing in mine_gives[bonus]:
@@ -739,6 +736,10 @@ class Player(object):
                         self.rates[bonus] = mine_time[bonus]
                     else:
                         self.rates[bonus] = self.rates[bonus]*mine_time[bonus]
+            if 'free crafting' in perk['bonuses']:
+                self.free_crafting = True
+            if 'free building' in perk['bonuses']:
+                self.free_building = True
 
     def buffedgives(self, res):
         gives = {}
@@ -768,14 +769,16 @@ class Player(object):
         is_craftable = True
         for key, value in self.recipes[item]['costs'].items():
             if self.inventory[key] < value*number:
-                is_craftable = False
+                if key != 'energy' or self.free_crafting is False:
+                    is_craftable = False
         return is_craftable
 
     def buildable(self, item):
         is_buildable = True
         for key, value in self.buildables[item]['buildcosts'].items():
             if self.inventory[key] < value:
-                is_buildable = False
+                if key != 'energy' or self.free_building is False:
+                    is_buildable = False
         return is_buildable
 
     def usable(self, item, number=1):
@@ -788,7 +791,8 @@ class Player(object):
     def craft(self, item, number=1):
         if self.craftable(item, number):
             for key, value in self.recipes[item]['costs'].items():
-                self.adjust_inventory(key, -value*number)
+                if key != 'energy' or self.free_crafting is False:
+                    self.adjust_inventory(key, -value*number)
             for key, value in self.recipes[item]['gives'].items():
                 self.adjust_inventory(key, value*number)
                 text = '{:,}'.format(value*number)+' '+get_name(key, value*number, False)+' crafted'
@@ -960,7 +964,8 @@ class Tile(object):
         else:
             self.__image = self.resource_dict['image']
         for key, value in BUILDABLES[res]['buildcosts'].items():
-            player.adjust_inventory(key, -value)
+            if key != 'energy' or player.free_building is False:
+                player.adjust_inventory(key, -value)
         action = self.finish_build
         action_dict = {}
         self.timer = Timer(BUILDABLES[res]['buildtime'], action, action_dict)
@@ -1776,7 +1781,7 @@ def draw_line(surf, pos1, pos2):
     pygame.draw.line(surf, BLACK, pos1, pos2, 2)
 
 
-def page_select_surf(pages, cur_page, text_surfaces, page_select_rect):
+def page_select_surf(cur_page, text_surfaces):
     page_index = pages.index(cur_page)
     w_extra = DISPLAY_WIDTH-GAME_OFFSET[0]-GAME_WIDTH-10-page_select_rect.w-10
     pages_surf = pygame.Surface((page_select_rect.w + w_extra, page_select_rect.h + 7))
@@ -1825,7 +1830,7 @@ for page in pages:
 
 page_select_surfs = {}
 for page in pages:
-    page_select_surfs[page] = page_select_surf(pages, page, page_surfaces, page_select_rect)
+    page_select_surfs[page] = page_select_surf(page, page_surfaces)
 
 
 def do_crafting_popup(item):
@@ -1837,11 +1842,12 @@ def do_crafting_popup(item):
     max_craftable = 0
     first = True
     for key, value in player.recipes[item]['costs'].items():
-        if first:
-            max_craftable = player.inventory[key]//value
-            first = False
-        else:
-            max_craftable = min(max_craftable, player.inventory[key]//value)
+        if key != 'energy' or player.free_crafting is False:
+            if first:
+                max_craftable = player.inventory[key]//value
+                first = False
+            else:
+                max_craftable = min(max_craftable, player.inventory[key]//value)
 
     bar = StatusBar(menu, 50, 50, 350, 50, GREEN, WHITE, BLACK, max_craftable)
     in_menu = True
@@ -1866,12 +1872,13 @@ def do_crafting_popup(item):
         menu.blit(FONTS['medium'].render('Cost:', True, BLACK), (25, 125))
         i = 0
         for key, value in player.recipes[item]['costs'].items():
-            craft_num_str = '{:,}'.format(value*craft_num)
-            inv_num_str = '{:,}'.format(player.inventory[key])
-            tmp_str = ITEMS[key]['i_cap']+': '+craft_num_str+' ('+inv_num_str+')'
-            tmp_text = FONTS['medium'].render(tmp_str, True, BLACK)
-            menu.blit(tmp_text, (50, 150 + i))
-            i += tmp_text.get_height()
+            if key != 'energy' or player.free_crafting is False:
+                craft_num_str = '{:,}'.format(value*craft_num)
+                inv_num_str = '{:,}'.format(player.inventory[key])
+                tmp_str = ITEMS[key]['i_cap']+': '+craft_num_str+' ('+inv_num_str+')'
+                tmp_text = FONTS['medium'].render(tmp_str, True, BLACK)
+                menu.blit(tmp_text, (50, 150 + i))
+                i += tmp_text.get_height()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -1916,12 +1923,13 @@ def do_build_popup(item, cur_map):
         menu.blit(FONTS['medium'].render('Cost:', True, BLACK), (50, 115))
         i = 0
         for key, value in player.buildables[item]['buildcosts'].items():
-            bld_num_str = '{:,}'.format(value)
-            inv_num_str = '{:,}'.format(player.inventory[key])
-            tmp_str = ITEMS[key]['i_cap']+': '+bld_num_str+' ('+inv_num_str+')'
-            tmp_text = FONTS['medium'].render(tmp_str, True, BLACK)
-            menu.blit(tmp_text, (100, 140 + i))
-            i += tmp_text.get_height()
+            if key != 'energy' or player.free_building is False:
+                bld_num_str = '{:,}'.format(value)
+                inv_num_str = '{:,}'.format(player.inventory[key])
+                tmp_str = ITEMS[key]['i_cap']+': '+bld_num_str+' ('+inv_num_str+')'
+                tmp_text = FONTS['medium'].render(tmp_str, True, BLACK)
+                menu.blit(tmp_text, (100, 140 + i))
+                i += tmp_text.get_height()
         xgrid = int(map_mouse[0]//TILE_WIDTH)
         ygrid = int(map_mouse[1]//TILE_HEIGHT)
         can_build = False
@@ -1955,54 +1963,55 @@ def do_using_popup(item):
     greyout.set_alpha(150)
     gameDisplay.blit(greyout, (0, 0))
     menu = gameDisplay.subsurface((700, 100, 450, 450))
-    maxusable = 0
+    maxusable = None
     if 'energy' in player.usables[item]['gives']:
         maxusable = int(math.ceil(((player.max_energy-player.inventory['energy']) /
                                    player.usables[item]['gives']['energy'])))
     for key, value in player.usables[item]['costs'].items():
-        if maxusable == 0:
+        if maxusable is None:
             maxusable = player.inventory[key]//value
         else:
             maxusable = min(maxusable, player.inventory[key]//value)
 
-    bar = StatusBar(menu, 50, 50, 350, 50, GREEN, WHITE, BLACK, maxusable)
-    in_menu = True
-    while in_menu:
-        menu.fill(WHITE)
-        xrect = pygame.Rect(425, 5, 20, 20)
-        pygame.draw.rect(menu, BLACK, menu.get_rect(), 1)
+    if maxusable > 0:
+        bar = StatusBar(menu, 50, 50, 350, 50, GREEN, WHITE, BLACK, maxusable)
+        in_menu = True
+        while in_menu:
+            menu.fill(WHITE)
+            xrect = pygame.Rect(425, 5, 20, 20)
+            pygame.draw.rect(menu, BLACK, menu.get_rect(), 1)
 
-        # draw X for closing menu
-        pygame.draw.line(menu, BLACK, (425, 5), (445, 25), 2)
-        pygame.draw.line(menu, BLACK, (425, 25), (445, 5), 2)
+            # draw X for closing menu
+            pygame.draw.line(menu, BLACK, (425, 5), (445, 25), 2)
+            pygame.draw.line(menu, BLACK, (425, 25), (445, 5), 2)
 
-        mouse = pygame.mouse.get_pos()
-        relmouse = get_rel_mouse(mouse, menu)
-        use_portion = min(max(0, (relmouse[0] - 50)/350), 1)
-        use_number = int(round(bar.maximum * use_portion, 0))
-        bar.val = use_number
-        bar.draw()
-        menu.blit(FONTS['medium'].render('Use: '+'{:,}'.format(use_number)+' '+get_name(item, use_number, False),
-                                         True, BLACK), (25, 10))
-        menu.blit(FONTS['medium'].render('Gives:', True, BLACK), (25, 125))
-        i = 0
-        for key, value in player.usables[item]['gives'].items():
-            tmpstr = ITEMS[key]['i_cap']+': '+'{:,}'.format(value*use_number)
-            tmptext = FONTS['medium'].render(tmpstr, True, BLACK)
-            menu.blit(tmptext, (50, 150 + i))
-            i += tmptext.get_height()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-            if event.type == pygame.MOUSEBUTTONUP:
-                if bar.collidepoint(relmouse):
-                    player.use(item, use_number)
-                    in_menu = False
-                if xrect.collidepoint(relmouse):
-                    in_menu = False
+            mouse = pygame.mouse.get_pos()
+            relmouse = get_rel_mouse(mouse, menu)
+            use_portion = min(max(0, (relmouse[0] - 50)/350), 1)
+            use_number = int(round(bar.maximum * use_portion, 0))
+            bar.val = use_number
+            bar.draw()
+            menu.blit(FONTS['medium'].render('Use: '+'{:,}'.format(use_number)+' '+get_name(item, use_number, False),
+                                             True, BLACK), (25, 10))
+            menu.blit(FONTS['medium'].render('Gives:', True, BLACK), (25, 125))
+            i = 0
+            for key, value in player.usables[item]['gives'].items():
+                tmpstr = ITEMS[key]['i_cap']+': '+'{:,}'.format(value*use_number)
+                tmptext = FONTS['medium'].render(tmpstr, True, BLACK)
+                menu.blit(tmptext, (50, 150 + i))
+                i += tmptext.get_height()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit()
+                if event.type == pygame.MOUSEBUTTONUP:
+                    if bar.collidepoint(relmouse):
+                        player.use(item, use_number)
+                        in_menu = False
+                    if xrect.collidepoint(relmouse):
+                        in_menu = False
 
-        pygame.display.flip()
+            pygame.display.flip()
 
 
 def get_recipe_surfs():
@@ -2020,11 +2029,12 @@ def get_recipe_surfs():
         tooltip_textlines.append(TextLine(''))
         tooltip_textlines.append(TextLine('Costs:'))
         for thing, amt in player.recipes[key]['costs'].items():
-            text = '  '+ITEMS[thing]['i_cap']+': '+'{:,}'.format(amt)+' ('+'{:,}'.format(player.inventory[thing])+')'
-            if player.inventory[thing] < amt:
-                tooltip_textlines.append(TextLine(text, GREY))
-            else:
-                tooltip_textlines.append(TextLine(text))
+            if thing != 'energy' or player.free_crafting is False:
+                text = '  '+ITEMS[thing]['i_cap']+': '+'{:,}'.format(amt)+' ('+'{:,}'.format(player.inventory[thing])+')'
+                if player.inventory[thing] < amt:
+                    tooltip_textlines.append(TextLine(text, GREY))
+                else:
+                    tooltip_textlines.append(TextLine(text))
         textline.tooltip = ToolTip(tooltip_textlines, BLACK)
         recipe_surfaces.append(textline)
         textline.string = key
@@ -2050,11 +2060,12 @@ def get_build_surfs():
         tooltip_textlines.append(TextLine(''))
         tooltip_textlines.append(TextLine('Costs:'))
         for thing, amt in player.buildables[key]['buildcosts'].items():
-            text = '  '+ITEMS[thing]['i_cap']+': '+'{:,}'.format(amt)+' ('+'{:,}'.format(player.inventory[thing])+')'
-            if player.inventory[thing] < amt:
-                tooltip_textlines.append(TextLine(text, GREY))
-            else:
-                tooltip_textlines.append(TextLine(text))
+            if thing != 'energy' or player.free_building is False:
+                text = '  '+ITEMS[thing]['i_cap']+': '+'{:,}'.format(amt)+' ('+'{:,}'.format(player.inventory[thing])+')'
+                if player.inventory[thing] < amt:
+                    tooltip_textlines.append(TextLine(text, GREY))
+                else:
+                    tooltip_textlines.append(TextLine(text))
         tooltip = ToolTip(tooltip_textlines, BLACK)
         textline.tooltip = tooltip
         build_surfaces.append(textline)
