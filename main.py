@@ -216,18 +216,7 @@ RESOURCES = {
                                 'powerproduced': 2,
                                 'upkeep': {'wood': 1},
                                 'frequency': 5*ONE_SEC},
-             # 'electric miner': {'symbol': "EM",
-             #                    'minetime': 5*ONE_SEC,
-             #                    'minegives': {'iron': 5,
-             #                                  'stone': 10,
-             #                                  'wood': 10},
-             #                    'minecosts': {'energy': 20},
-             #                    'confirmdestroy': True,
-             #                    'gathers': ['boulder', 'irondeposit', 'golddeposit'],
-             #                    'workradius': 3,
-             #                    'upkeep': {'power': 1},
-             #                    'frequency': 5*ONE_SEC},
-             'iron mine': {'symbol': "IM",
+             'iron mine': {'image': pygame.image.load('images/ironmine.png').convert_alpha(),
                            'minetime': TEN_SEC,
                            'minegives': {'stone': 20,
                                          'wood': 40,
@@ -238,7 +227,7 @@ RESOURCES = {
                            'upkeep': {'workers': 2,
                                       'power': 1},
                            'frequency': 5*ONE_SEC},
-             'gold mine': {'symbol': "GM",
+             'gold mine': {'image': pygame.image.load('images/goldmine.png').convert_alpha(),
                            'minetime': TEN_SEC,
                            'minegives': {'stone': 20,
                                          'wood': 40,
@@ -548,6 +537,11 @@ PERKS = {
                  'description': 'Learn how to build houses. ',
                  'dependencies': ['100'],
                  'knowledge': {'buildings': ['house']}},
+         '103': {'name': 'Market!',
+                 'cost': 50,
+                 'description': 'Unlock the Buying tab. ',
+                 'dependencies': ['102'],
+                 'bonuses': {'buying': True}},
          '113': {'name': 'Forager Hut',
                  'cost': 50,
                  'description': 'Learn how to build forager huts.',
@@ -714,6 +708,7 @@ class Player(object):
                 self.dropbuffs[key1]['minecosts'][key2] = 0
 
     def get_perk(self, perk_id):
+        global pages
         perk = PERKS[perk_id]
         if 'knowledge' in perk:
             if 'recipes' in perk['knowledge']:
@@ -740,6 +735,9 @@ class Player(object):
                 self.free_crafting = True
             if 'free building' in perk['bonuses']:
                 self.free_building = True
+            if 'buying' in perk['bonuses']:
+                pages = ['Inventory', 'Use', 'Buy', 'Craft', 'Build', 'Perks']
+                do_page_select_surfs()
 
     def buffedgives(self, res):
         gives = {}
@@ -1817,20 +1815,29 @@ def page_select_surf(cur_page, text_surfaces):
 
 
 pages = ['Inventory', 'Use', 'Craft', 'Build', 'Perks']
-
-i = 45
 page_surfaces = []
-page_select_rect = pygame.Rect(0, 0, 1, 1)
-for page in pages:
-    textline = TextLine(page)
-    page_surfaces.append(textline)
-    textline.rect.x = i
-    page_select_rect = page_select_rect.union(textline)
-    i += textline.rect.w + 30
-
+page_select_rect = None
 page_select_surfs = {}
-for page in pages:
-    page_select_surfs[page] = page_select_surf(page, page_surfaces)
+
+
+def do_page_select_surfs():
+    global pages
+    global page_surfaces
+    global page_select_rect
+    global page_select_surfs
+    i = 45
+    page_surfaces = []
+    page_select_rect = pygame.Rect(0, 0, 1, 1)
+    for page in pages:
+        textline = TextLine(page)
+        page_surfaces.append(textline)
+        textline.rect.x = i
+        page_select_rect = page_select_rect.union(textline)
+        i += textline.rect.w + 30
+
+    page_select_surfs = {}
+    for page in pages:
+        page_select_surfs[page] = page_select_surf(page, page_surfaces)
 
 
 def do_crafting_popup(item):
@@ -2133,6 +2140,32 @@ def get_sell_buttons(game):
     return sell_buttons
 
 
+def get_buy_buttons(game):
+    buy_buttons = []
+    height = FONTS['medium'].render('10', True, BLACK).get_height()
+    i = 100
+    for key, value in player.inventory.items():
+        if key not in game.buy_exclude and key in player.known_items:
+            cost = ITEMS[key]['sell_value']*2
+            if player.inventory['coins'] >= cost:
+                button1 = Button(11, height-1, '1')
+                button1.tags.append(key)
+                button1.rect = button1.surf.get_rect(topleft=(GAME_WIDTH + 375, i))
+                buy_buttons.append(button1)
+            if player.inventory['coins'] >= cost*10:
+                button2 = Button(21, height-1, '10')
+                button2.tags.append(key)
+                button2.rect = button2.surf.get_rect(topleft=(GAME_WIDTH + 396, i))
+                buy_buttons.append(button2)
+            if player.inventory['coins'] >= cost*100:
+                button3 = Button(31, height-1, '100')
+                button3.tags.append(key)
+                button3.rect = button3.surf.get_rect(topleft=(GAME_WIDTH + 427, i))
+                buy_buttons.append(button3)
+            i += height
+    return buy_buttons
+
+
 def make_perk_surf(surface, game_perks, rel_mouse):
     mouse = pygame.mouse.get_pos()
     surface.fill(WHITE)
@@ -2189,7 +2222,7 @@ def draw_radius_surface(pos, radius):
 
 
 def start_screen():
-    global log, player, game
+    global log, player, game, pages
     log = Log()
     player = Player()
     game = None
@@ -2210,17 +2243,19 @@ def start_screen():
                 quit()
             if event.type == pygame.MOUSEBUTTONUP:
                 if start_button.rect.collidepoint(mouse):
+                    pages = ['Inventory', 'Use', 'Craft', 'Build', 'Perks']
+                    do_page_select_surfs()
                     game = Game()
                     game.main()
                 if cheat_button.rect.collidepoint(mouse):
+                    pages = ['Inventory', 'Use', 'Craft', 'Build', 'Perks']
+                    do_page_select_surfs()
                     game = Game(cheats=True)
                     game.main()
 
 
 def pause_screen():
-    global player
-    global log
-    global game
+    global player, log, game, pages
     menuw = 200
     menuh = 400
     centerx = menuw//2
@@ -2267,6 +2302,7 @@ def pause_screen():
                         log.clean()
                         pickle.dump(log, f)
                         pickle.dump(player, f)
+                        pickle.dump(pages, f)
                         game.clean()
                         pickle.dump(game, f)
                     log.add_line(TextLine('game saved', GREEN))
@@ -2284,13 +2320,13 @@ def pause_screen():
 
 
 def load_game():
-    global player
-    global log
-    global game
+    global player, log, game, pages
     with open('save.pickle', 'rb') as f:
         log = pickle.load(f)
         player = pickle.load(f)
+        pages = pickle.load(f)
         game = pickle.load(f)
+    do_page_select_surfs()
     game.page_select_surf = page_select_surfs[game.cur_page]
     game.energy_text.rect.x, game.energy_text.rect.y = 50, 6
     game.main()
@@ -2319,11 +2355,13 @@ class Game(object):
         self.cur_page = pages[0]
 
         self.exclude = ['energy', 'coins']
+        self.buy_exclude = ['energy', 'coins', 'ironore', 'goldore', 'gold', 'gem']
 
         self.recipe_surfaces = get_recipe_surfs()
         self.usables_surfaces = get_usables_surfs()
         self.build_surfaces = get_build_surfs()
         self.sell_buttons = get_sell_buttons(self)
+        self.buy_buttons = get_buy_buttons(self)
 
         self.perks = []
         perk_max_x = 0
@@ -2693,6 +2731,37 @@ class Game(object):
                 gameDisplay.blit(usesurf.surf, (usesurf.rect.x, usesurf.rect.y))
                 if usesurf.rect.collidepoint(self.mouse):
                     tooltip = usesurf.tooltip
+        elif self.cur_page == 'Buy':
+            self.buy_buttons = get_buy_buttons(self)
+            for button in self.buy_buttons:
+                gameDisplay.blit(button.surf, button.rect.topleft)
+
+            header_text1 = FONTS['medium'].render('Number', True, BLACK)
+            header_text2 = FONTS['medium'].render('Cost', True, BLACK)
+            header_text3 = FONTS['medium'].render('Buy', True, BLACK)
+            gameDisplay.blit(header_text1, (GAME_WIDTH + 275 - header_text1.get_width(), 75))
+            gameDisplay.blit(header_text2, (GAME_WIDTH + 340 - header_text2.get_width(), 75))
+            gameDisplay.blit(header_text3, (GAME_WIDTH + 375, 75))
+            i = 0
+            text_surfs = {}
+
+            for key, value in player.inventory.items():
+                if key not in self.buy_exclude and key in player.known_items:
+                    tmptext1 = FONTS['medium'].render(ITEMS[key]['i_cap']+':', True, BLACK)
+                    tmptext2 = FONTS['medium'].render('{:,}'.format(value), True, BLACK)
+                    tmptext2x = GAME_WIDTH + 275 - tmptext2.get_width()
+                    tmpstr3 = '{:,}'.format(get_sell_val(key)*2)
+                    tmptext3 = FONTS['medium'].render(tmpstr3, True, BLACK)
+                    tmptext3x = GAME_WIDTH + 340 - tmptext3.get_width()
+                    gameDisplay.blit(tmptext1, (GAME_WIDTH + 100, 100 + i))
+                    gameDisplay.blit(tmptext2, (tmptext2x, 100 + i))
+                    gameDisplay.blit(tmptext3, (tmptext3x, 100 + i))
+
+                    text_surfs[key] = {'surf': tmptext1,
+                                       'pos': (GAME_WIDTH + 100, 100 + i)}
+
+                    i += tmptext1.get_height()
+
         elif self.cur_page == 'Craft':
             self.recipe_surfaces = get_recipe_surfs()
             for resurf in self.recipe_surfaces:
@@ -2815,6 +2884,13 @@ class Game(object):
                                         self.drawgame()
                                         do_crafting_popup(recipe.string)
 
+                        elif self.cur_page == 'Buy':
+                            for button in self.buy_buttons:
+                                if button.rect.collidepoint(mouse):
+                                    player.adjust_inventory(button.tags[0], int(button.string))
+                                    player.adjust_inventory('coins',
+                                                            ITEMS[button.tags[0]]['sell_value']*int(button.string)*-2)
+
                         elif self.cur_page == 'Use':
                             for usable in self.usables_surfaces:
                                 if usable.check_mouseover(mouse):
@@ -2837,6 +2913,7 @@ class Game(object):
                                 for perk in self.perks:
                                     if perk.rect.collidepoint(rel_mouse):
                                         perk.do_click()
+                                        self.page_select_surf = page_select_surfs[self.cur_page]
 
                         for i, page in enumerate(page_surfaces):
                             pagemouse = (mouse[0] - GAME_WIDTH - 60,
