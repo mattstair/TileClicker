@@ -7,613 +7,23 @@ from collections import defaultdict
 from statusbar import StatusBar
 from statussquare import StatusSquare
 from scrollwindow import ScrollWindow
+from constants import *
 
 pygame.init()
 pygame.display.set_caption('Tile Clicker')
 
 clock = pygame.time.Clock()
-GAME_TICK = pygame.USEREVENT + 1  # 25
-TICKS_PER_SEC = 20
-ONE_SEC = TICKS_PER_SEC
-TEN_SEC = 10*TICKS_PER_SEC
-
-DISPLAY_WIDTH = 1200
-DISPLAY_HEIGHT = 700
 
 gameDisplay = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
 
-MAP_SIZE = 9
+for res in RESOURCES:
+    if 'image_str' in RESOURCES[res]:
+        RESOURCES[res]['image'] = pygame.image.load(RESOURCES[res]['image_str']).convert_alpha()
 
-TILE_WIDTH = 50
-TILE_HEIGHT = 50
-
-PERK_WIDTH = 100
-PERK_HEIGHT = 50
-PERK_OFFSET = 50
-PERK_DIST = 25
-
-GAME_OFFSETS = {'x': 50, 'y': 50}
-GAME_OFFSET = (GAME_OFFSETS['x'], GAME_OFFSETS['y'])
-
-GAME_WIDTH = 600
-GAME_HEIGHT = 600
-
-CHART_WIDTH = 240
-CHART_HEIGHT = 240
-
-BLACK = pygame.Color('black')
-WHITE = pygame.Color('white')
-RED = pygame.Color('red')
-LIGHTGREEN = pygame.Color('lightgreen')
-DARKGREEN = pygame.Color('darkgreen')
-GREEN = pygame.Color('green')
-GREY = pygame.Color('grey')
-BLUE = pygame.Color('blue')
-LIGHTBLUE = pygame.Color('lightblue')
-YELLOW = pygame.Color('yellow')
-PURPLE = pygame.Color('purple')
-CYAN = pygame.Color('cyan')
-
-WATER = (82, 146, 255)
-GRASS = (95, 131, 33)
-ROCK = (215, 255, 158)
-SAND = (255, 235, 115)
-ICE = (219, 243, 255)
-
-# Coin cost of maps at different radii
-MAP_COSTS = {0: 0,
-             1: 100,
-             2: 200,
-             3: 400,
-             4: 800}
-
-TILE_INFO = {
-             'r': {'name': 'Stone',
-                   'color': GREY,
-                   'can_spawn': {'rock': 10,
-                                 'boulder': 5,
-                                 'irondeposit': 2,
-                                 'golddeposit': 2}},
-             'w': {'name': 'Water',
-                   'color': WATER,
-                   'can_spawn': {'fish': 1}},
-             'g': {'name': 'Grass',
-                   'color': GRASS,
-                   'can_spawn': {'tree': 1,
-                                 'bush': 1}},
-             's': {'name': 'Sand',
-                   'color': SAND,
-                   'can_spawn': {'sand': 10,
-                                 'treasure': 1}},
-             'i': {'name': 'Ice',
-                   'color': ICE,
-                   'can_spawn': {'none': 15,
-                                 'loosegem': 1}}
-             }
-
-RESOURCES = {
-             'rock': {'image': pygame.image.load('images/rocks.png').convert_alpha(),
-                      'minetime': 5*ONE_SEC,
-                      'minegives': {'stone': 1},
-                      'minecosts': {'energy': 5}},
-             'boulder': {'image': pygame.image.load('images/boulder.png').convert_alpha(),
-                         'minetime': TEN_SEC,
-                         'minegives': {'stone': 4},
-                         'minecosts': {'energy': 20}},
-             'irondeposit': {'image': pygame.image.load('images/iron.png').convert_alpha(),
-                             'minetime': TEN_SEC,
-                             'minegives': {'ironore': 2},
-                             'minecosts': {'energy': 20}},
-             'golddeposit': {'image': pygame.image.load('images/gold.png').convert_alpha(),
-                             'minetime': TEN_SEC,
-                             'minegives': {'goldore': 2},
-                             'minecosts': {'energy': 20}},
-             'fish': {'image': pygame.image.load('images/fish.png').convert_alpha(),
-                      'minetime': 5*ONE_SEC,
-                      'minegives': {'food': 1},
-                      'minecosts': {'energy': 5}},
-             'tree': {'image': pygame.image.load('images/tree.png').convert_alpha(),
-                      'minetime': 5*ONE_SEC,
-                      'minegives': {'wood': 2},
-                      'minecosts': {'energy': 5}},
-             'bush': {'image': pygame.image.load('images/bush.png').convert_alpha(),
-                      'minetime': 5*ONE_SEC,
-                      'minegives': {'food': 1},
-                      'minecosts': {'energy': 5}},
-             'sand': {'image': pygame.image.load('images/sand.png').convert_alpha(),
-                      'minetime': ONE_SEC,
-                      'minegives': {'sand': 1},
-                      'minecosts': {'energy': 5}},
-             'treasure': {'image': pygame.image.load('images/chest.png').convert_alpha(),
-                          'minetime': ONE_SEC,
-                          'minegives': {'coins': 20},
-                          'minecosts': {'energy': 5}},
-             'loosegem': {'image': pygame.image.load('images/gem.png').convert_alpha(),
-                          'minetime': ONE_SEC,
-                          'minegives': {'gem': 1},
-                          'minecosts': {'energy': 5}},
-             'animal trap': {'image': pygame.image.load('images/trap.png').convert_alpha(),
-                             'minetime': ONE_SEC,
-                             'minegives': {'food': 4},
-                             'minecosts': {'energy': 5}},
-             'house': {'image': pygame.image.load('images/house0.png').convert_alpha(),
-                       'minetime': TEN_SEC,
-                       'minegives': {'stone': 10,
-                                     'wood': 20},
-                       'minecosts': {'energy': 20},
-                       'beds': 4,
-                       'recruitcost': 20,
-                       'confirmdestroy': True,
-                       'upkeep': {'food': 1},
-                       'frequency': TEN_SEC},
-             'farm': {'image': pygame.image.load('images/farm.png').convert_alpha(),
-                      'minetime': TEN_SEC,
-                      'minegives': {'stone': 10,
-                                    'wood': 20},
-                      'minecosts': {'energy': 20},
-                      'confirmdestroy': True,
-                      'produces': {'food': 1},
-                      'upkeep': {'workers': 1},
-                      'frequency': TEN_SEC},
-             'fishing shack': {'image': pygame.image.load('images/tackle.png').convert_alpha(),
-                               'minetime': 5*ONE_SEC,
-                               'minegives': {'stick': 5,
-                                             'wood': 10},
-                               'minecosts': {'energy': 20},
-                               'confirmdestroy': True,
-                               'gathers': ['fish'],
-                               'workradius': 2,
-                               'upkeep': {'workers': 1},
-                               'frequency': 5*ONE_SEC},
-             'forager hut': {'image': pygame.image.load('images/forager.png').convert_alpha(),
-                             'minetime': 5*ONE_SEC,
-                             'minegives': {'stick': 5,
-                                           'wood': 10},
-                             'minecosts': {'energy': 20},
-                             'confirmdestroy': True,
-                             'gathers': ['bush', 'rock', 'loosegem', 'sand'],
-                             'workradius': 3,
-                             'upkeep': {'workers': 1},
-                             'frequency': 5*ONE_SEC},
-             'lumberjack hut': {'image': pygame.image.load('images/choppingblock.png').convert_alpha(),
-                                'minetime': 5*ONE_SEC,
-                                'minegives': {'stone': 10,
-                                              'wood': 20},
-                                'minecosts': {'energy': 20},
-                                'confirmdestroy': True,
-                                'gathers': ['tree'],
-                                'workradius': 3,
-                                'upkeep': {'workers': 1},
-                                'frequency': 5*ONE_SEC},
-             'tree farm': {'image': pygame.image.load('images/treefarm.png').convert_alpha(),
-                           'minetime': TEN_SEC,
-                           'minegives': {'stone': 10,
-                                         'wood': 20,
-                                         'glass': 20},
-                           'minecosts': {'energy': 20},
-                           'confirmdestroy': True,
-                           'produces': {'wood': 1},
-                           'upkeep': {'workers': 1},
-                           'frequency': TEN_SEC},
-             'prospector': {'image': pygame.image.load('images/miner.png').convert_alpha(),
-                            'minetime': 5*ONE_SEC,
-                            'minegives': {'iron': 5,
-                                          'stone': 10,
-                                          'wood': 10},
-                            'minecosts': {'energy': 20},
-                            'confirmdestroy': True,
-                            'gathers': ['boulder', 'irondeposit', 'golddeposit'],
-                            'workradius': 2,
-                            'upkeep': {'workers': 1},
-                            'frequency': 5*ONE_SEC},
-             'wood generator': {'symbol': "WG",
-                                'minetime': 5*ONE_SEC,
-                                'minegives': {'iron': 5,
-                                              'stone': 10,
-                                              'wood': 10},
-                                'minecosts': {'energy': 20},
-                                'confirmdestroy': True,
-                                'powerproduced': 2,
-                                'upkeep': {'wood': 1},
-                                'frequency': 5*ONE_SEC},
-             'iron mine': {'image': pygame.image.load('images/ironmine.png').convert_alpha(),
-                           'minetime': TEN_SEC,
-                           'minegives': {'stone': 20,
-                                         'wood': 40,
-                                         'iron': 10},
-                           'minecosts': {'energy': 20},
-                           'confirmdestroy': True,
-                           'produces': {'ironore': 1},
-                           'upkeep': {'workers': 2,
-                                      'power': 1},
-                           'frequency': 5*ONE_SEC},
-             'gold mine': {'image': pygame.image.load('images/goldmine.png').convert_alpha(),
-                           'minetime': TEN_SEC,
-                           'minegives': {'stone': 20,
-                                         'wood': 40,
-                                         'iron': 10},
-                           'minecosts': {'energy': 20},
-                           'confirmdestroy': True,
-                           'produces': {'goldore': 1},
-                           'upkeep': {'workers': 2,
-                                      'power': 1},
-                           'frequency': 5*ONE_SEC},
-             }
-
-ALL_RECIPES = {
-               'stick': {'gives': {'stick': 2},
-                         'costs': {'wood': 1,
-                                   'energy': 2}},
-               'glass': {'gives': {'glass': 1},
-                         'costs': {'sand': 2,
-                                   'energy': 10}},
-               'iron': {'gives': {'iron': 1},
-                        'costs': {'ironore': 2,
-                                  'energy': 10}},
-               'gold': {'gives': {'gold': 1},
-                        'costs': {'goldore': 2,
-                                  'energy': 10}}
-               }
-
-BUILDABLES = {
-              'animal trap': {'description': 'Produces 4 food. Consumed on use.',
-                              'canbuild': ['g', 'w'],
-                              'buildcosts': {'food': 1,
-                                             'stone': 1,
-                                             'stick': 5,
-                                             'energy': 5},
-                              'buildtime': TEN_SEC},
-              'house': {'description': 'Increases worker capacity. Upkeep: 1 food / 10 sec. ',
-                        'canbuild': ['g', 'r', 's', 'i'],
-                        'buildcosts': {'stone': 30,
-                                       'wood': 40,
-                                       'energy': 50},
-                        'buildtime': 5*ONE_SEC},
-              'farm': {'description': 'Generates 1 food / 10 sec. Needs 1 worker. ',
-                       'canbuild': ['g'],
-                       'buildcosts': {'stone': 30,
-                                      'wood': 40,
-                                      'energy': 50},
-                       'buildtime': 5*ONE_SEC},
-              'fishing shack': {'description': 'Automatically collects nearby fish. Needs 1 worker. ',
-                                'canbuild': ['g', 'r', 's', 'i'],
-                                'buildcosts': {'stick': 10,
-                                               'wood': 20,
-                                               'energy': 30},
-                                'buildtime': 5*ONE_SEC},
-              'forager hut': {'description': 'Automatically collects nearby berries and rocks. Needs 1 worker. ',
-                              'canbuild': ['g', 'r', 's', 'i'],
-                              'buildcosts': {'stick': 10,
-                                             'wood': 20,
-                                             'energy': 30},
-                              'buildtime': 5*ONE_SEC},
-              'lumberjack hut': {'description': 'Automatically chops down trees. Needs 1 worker. ',
-                                 'canbuild': ['g', 'r', 's', 'i'],
-                                 'buildcosts': {'stone': 30,
-                                                'wood': 40,
-                                                'energy': 30},
-                                 'buildtime': 5 * ONE_SEC},
-              'tree farm': {'description': 'Generates 1 wood / 10 sec. Needs 1 worker. ',
-                            'canbuild': ['g'],
-                            'buildcosts': {'stone': 30,
-                                           'wood': 40,
-                                           'glass': 40,
-                                           'energy': 50},
-                            'buildtime': 5*ONE_SEC},
-              'prospector': {'description': 'Automatically mines boulders and ores. Needs 1 worker. ',
-                             'canbuild': ['g', 'r', 's', 'i'],
-                             'buildcosts': {'iron': 10,
-                                            'stone': 20,
-                                            'wood': 20,
-                                            'energy': 30},
-                             'buildtime': 5 * ONE_SEC},
-              'wood generator': {'description': 'Consumes 1 wood and generates 2 power. ',
-                                 'canbuild': ['g', 'r', 's', 'i'],
-                                 'buildcosts': {'iron': 10,
-                                                'stone': 20,
-                                                'wood': 20,
-                                                'energy': 30},
-                                 'buildtime': 5 * ONE_SEC},
-              'iron mine': {'description': 'Generates 1 iron ore / 10 sec. Needs 2 workers and 1 power. ',
-                            'canbuild': ['r'],
-                            'buildcosts': {'stone': 40,
-                                           'wood': 80,
-                                           'iron': 20,
-                                           'energy': 80},
-                            'buildtime': TEN_SEC},
-              'gold mine': {'description': 'Generates 1 gold ore / 10 sec. Needs 2 workers and 1 power. ',
-                            'canbuild': ['r'],
-                            'buildcosts': {'stone': 40,
-                                           'wood': 80,
-                                           'iron': 20,
-                                           'energy': 80},
-                            'buildtime': TEN_SEC},
-              }
-
-ITEMS = {
-         'energy': {'i_cap': 'Energy',
-                    'lower': 'energy',
-                    'plural': 'energy',
-                    'plural_i_cap': 'Energy',
-                    'sell_value': 0},
-         'coins': {'i_cap': 'Coin',
-                   'lower': 'coin',
-                   'plural': 'coins',
-                   'plural_i_cap': 'Coins',
-                   'sell_value': 0},
-         'workers': {'i_cap': 'Worker',
-                     'lower': 'worker',
-                     'plural': 'workers',
-                     'plural_i_cap': 'Workers',
-                     'sell_value': 0},
-         'wood': {'i_cap': 'Wood',
-                  'lower': 'wood',
-                  'plural': 'pieces of wood',
-                  'plural_i_cap': 'Pieces of wood',
-                  'sell_value': 2},
-         'stick': {'i_cap': 'Stick',
-                   'lower': 'stick',
-                   'plural': 'sticks',
-                   'plural_i_cap': 'Sticks',
-                   'sell_value': 1},
-         'stone': {'i_cap': 'Stone',
-                   'lower': 'stone',
-                   'plural': 'stones',
-                   'plural_i_cap': 'Stones',
-                   'sell_value': 1},
-         'food': {'i_cap': 'Food',
-                  'lower': 'portion of food',
-                  'plural': 'portions of food',
-                  'plural_i_cap': 'Portions of food',
-                  'sell_value': 2},
-         'ironore': {'i_cap': 'Iron ore',
-                     'lower': 'iron ore',
-                     'plural': 'iron ore',
-                     'plural_i_cap': 'Iron ore',
-                     'sell_value': 2},
-         'iron': {'i_cap': 'Iron',
-                  'lower': 'iron ingot',
-                  'plural': 'iron ingots',
-                  'plural_i_cap': 'Iron Ingots',
-                  'sell_value': 10},
-         'goldore': {'i_cap': 'Gold ore',
-                     'lower': 'gold ore',
-                     'plural': 'gold ore',
-                     'plural_i_cap': 'Gold ore',
-                     'sell_value': 3},
-         'gold': {'i_cap': 'Gold',
-                  'lower': 'gold ingot',
-                  'plural': 'gold ingots',
-                  'plural_i_cap': 'Gold ingots',
-                  'sell_value': 20},
-         'sand': {'i_cap': 'Sand',
-                  'lower': 'pile of sand',
-                  'plural': 'piles of sand',
-                  'plural_i_cap': 'Piles of sand',
-                  'sell_value': 1},
-         'glass': {'i_cap': 'Glass',
-                   'lower': 'pane of glass',
-                   'plural': 'panes of glass',
-                   'plural_i_cap': 'Panes of glass',
-                   'sell_value': 5},
-         'gem': {'i_cap': 'Gem',
-                 'lower': 'gem',
-                 'plural': 'gems',
-                 'plural_i_cap': 'Gems',
-                 'sell_value': 100},
-         'fish': {'i_cap': 'Fish',
-                  'lower': 'fish',
-                  'plural': 'fishing spots',
-                  'plural_i_cap': 'Fishing spots'},
-         'rock': {'i_cap': 'Rock',
-                  'lower': 'rock',
-                  'plural': 'rocks',
-                  'plural_i_cap': 'Rocks'},
-         'boulder': {'i_cap': 'Boulder',
-                     'lower': 'boulder',
-                     'plural': 'boulders',
-                     'plural_i_cap': 'Boulders'},
-         'irondeposit': {'i_cap': 'Iron deposit',
-                         'lower': 'iron deposit',
-                         'plural': 'iron deposits',
-                         'plural_i_cap': 'iron deposits'},
-         'golddeposit': {'i_cap': 'Gold deposit',
-                         'lower': 'gold deposit',
-                         'plural': 'gold deposits',
-                         'plural_i_cap': 'Gold deposits'},
-         'tree': {'i_cap': 'Tree',
-                  'lower': 'tree',
-                  'plural': 'trees',
-                  'plural_i_cap': 'Trees'},
-         'bush': {'i_cap': 'Bush',
-                  'lower': 'bush',
-                  'plural': 'bushes',
-                  'plural_i_cap': 'Bushes'},
-         'treasure': {'i_cap': 'Treasure',
-                      'lower': 'treasure',
-                      'plural': 'treasure chests',
-                      'plural_i_cap': 'Treasure chests'},
-         'loosegem': {'i_cap': 'Gem',
-                      'lower': 'gem',
-                      'plural': 'gems',
-                      'plural_i_cap': 'Gems'},
-         'house': {'i_cap': 'House',
-                   'lower': 'house',
-                   'plural': 'houses',
-                   'plural_i_cap': 'Houses'},
-         'farm': {'i_cap': 'Farm',
-                  'lower': 'farm',
-                  'plural': 'farms',
-                  'plural_i_cap': 'Farms'},
-         'fishing shack': {'i_cap': 'Fishing shack',
-                           'lower': 'fishing shack',
-                           'plural': 'fishing shacks',
-                           'plural_i_cap': 'Fishing shacks'},
-         'animal trap': {'i_cap': 'Animal Trap',
-                         'lower': 'animal trap',
-                         'plural': 'animal traps',
-                         'plural_i_cap': 'Animal traps'},
-         'forager hut': {'i_cap': 'Forager hut',
-                         'lower': 'forager hut',
-                         'plural': 'forager huts',
-                         'plural_i_cap': 'Forager huts'},
-         'lumberjack hut': {'i_cap': 'Lumberjack hut',
-                            'lower': 'lumberjack hut',
-                            'plural': 'lumberjack huts',
-                            'plural_i_cap': 'Lumberjack huts'},
-         'tree farm': {'i_cap': 'Tree farm',
-                       'lower': 'tree farm',
-                       'plural': 'tree farms',
-                       'plural_i_cap': 'Tree farms'},
-         'prospector': {'i_cap': 'Prospector',
-                        'lower': 'prospector',
-                        'plural': 'prospectors',
-                        'plural_i_cap': 'Prospectors'},
-         'wood generator': {'i_cap': 'Wood generator',
-                            'lower': 'wood generator',
-                            'plural': 'wood generators',
-                            'plural_i_cap': 'Wood generators'},
-         'iron mine': {'i_cap': 'Iron mine',
-                       'lower': 'iron mine',
-                       'plural': 'iron mines',
-                       'plural_i_cap': 'Iron mines'},
-         'gold mine': {'i_cap': 'Gold mine',
-                       'lower': 'gold mine',
-                       'plural': 'gold mines',
-                       'plural_i_cap': 'Gold mines'},
-         }
-
-PERKS = {
-         '000': {'name': 'Bonus Stone',
-                 'cost': 50,
-                 'description': 'Get 50% more stone from boulders (additive).',
-                 'dependencies': None,
-                 'bonuses': {'minegives': {'boulder': {'stone': 0.5}}}},
-         '001': {'name': 'Bonuser Stone',
-                 'cost': 100,
-                 'description': 'Get 100% more stone from rocks and boulders (additive).',
-                 'dependencies': ['000'],
-                 'bonuses': {'minegives': {'rock': {'stone': 1.0},
-                                           'boulder': {'stone': 1.0}}}},
-         '002': {'name': 'Outsourcing',
-                 'cost': 200,
-                 'description': 'Crafting no longer costs Energy.',
-                 'dependencies': ['011'],
-                 'bonuses': {'free crafting': True}},
-         '003': {'name': 'More Outsourcing',
-                 'cost': 200,
-                 'description': 'Building no longer costs Energy.',
-                 'dependencies': ['011'],
-                 'bonuses': {'free building': True}},
-         '011': {'name': 'Melting',
-                 'cost': 50,
-                 'description': 'Learn how to make glass and how to smelt iron and gold.',
-                 'dependencies': ['000'],
-                 'knowledge': {'recipes': ['glass', 'iron', 'gold']}},
-         '012': {'name': 'Prospecting',
-                 'cost': 50,
-                 'description': 'Learn how to install prospectors who can mine Boulders and ore.',
-                 'dependencies': ['011', '102'],
-                 'knowledge': {'buildings': ['prospector']}},
-         '013': {'name': 'Better mining',
-                 'cost': 100,
-                 'description': 'Get 50% more stone from boulders and ore when mining (additive).',
-                 'dependencies': ['012'],
-                 'bonuses': {'minegives': {'boulder': {'stone': 0.5},
-                                           'irondeposit': {'ironore': 0.5},
-                                           'golddeposit': {'goldore': 0.5}}}},
-         '021': {'name': 'Power!',
-                 'cost': 100,
-                 'description': 'Learn how to build a generator that burns wood to create power. ',
-                 'dependencies': ['011'],
-                 'knowledge': {'buildings': ['wood generator']}},
-         '100': {'name': 'Bonus Wood',
-                 'cost': 50,
-                 'description': 'Get 50% more wood from trees (additive).',
-                 'dependencies': ['000'],
-                 'bonuses': {'minegives': {'tree': {'wood': 0.5}}}},
-         '102': {'name': 'People!',
-                 'cost': 50,
-                 'description': 'Learn how to build houses. ',
-                 'dependencies': ['100'],
-                 'knowledge': {'buildings': ['house']}},
-         '103': {'name': 'Market!',
-                 'cost': 50,
-                 'description': 'Unlock the Buying tab. ',
-                 'dependencies': ['102'],
-                 'bonuses': {'buying': True}},
-         '113': {'name': 'Forager Hut',
-                 'cost': 50,
-                 'description': 'Learn how to build forager huts.',
-                 'dependencies': ['102'],
-                 'knowledge': {'buildings': ['forager hut']}},
-         '114': {'name': 'Lumberjack Hut',
-                 'cost': 50,
-                 'description': 'Learn how to build lumberjack huts.',
-                 'dependencies': ['102'],
-                 'knowledge': {'buildings': ['lumberjack hut']}},
-         '115': {'name': 'Fishing Shack',
-                 'cost': 50,
-                 'description': 'Learn how to build fishing shacks.',
-                 'dependencies': ['102'],
-                 'knowledge': {'buildings': ['fishing shack']}},
-         '123': {'name': 'Farm',
-                 'cost': 100,
-                 'description': 'Learn how to build farms.',
-                 'dependencies': ['113'],
-                 'knowledge': {'buildings': ['farm']}},
-         '124': {'name': 'Tree Farm',
-                 'cost': 100,
-                 'description': 'Learn how to build tree farms.',
-                 'dependencies': ['114'],
-                 'knowledge': {'buildings': ['tree farm']}},
-         '131': {'name': 'Bonuser Wood',
-                 'cost': 100,
-                 'description': 'Get 50% more wood from trees (additive).',
-                 'dependencies': ['100'],
-                 'bonuses': {'minegives': {'tree': {'wood': 0.5}}}},
-         '141': {'name': 'Faster Wood',
-                 'cost': 50,
-                 'description': 'Chop trees 50% faster (multiplicative).',
-                 'dependencies': ['100'],
-                 'bonuses': {'minetime': {'tree': 0.5}}},
-         '142': {'name': 'Fasterer Wood',
-                 'cost': 100,
-                 'description': 'Chop trees 50% faster (multiplicative).',
-                 'dependencies': ['141'],
-                 'bonuses': {'minetime': {'tree': 0.5}}},
-         '200': {'name': 'Bonus Ore',
-                 'cost': 100,
-                 'description': 'Get 50% more ore from deposits (additive).',
-                 'dependencies': ['100'],
-                 'bonuses': {'minegives': {'golddeposit': {'goldore': 0.5},
-                                           'irondeposit': {'ironore': 0.5}}}},
-         '201': {'name': 'Bonuser Ore',
-                 'cost': 200,
-                 'description': 'Get 100% more ore from deposits (additive).',
-                 'dependencies': ['200'],
-                 'bonuses': {'minegives': {'golddeposit': {'goldore': 1.0},
-                                           'irondeposit': {'ironore': 1.0}}}},
-         '211': {'name': 'Iron Mine',
-                 'cost': 100,
-                 'description': 'Learn how to build iron mines.',
-                 'dependencies': ['200', '021', '102'],
-                 'knowledge': {'buildings': ['iron mine']}},
-         '212': {'name': 'Gold Mine',
-                 'cost': 200,
-                 'description': 'Learn how to build gold mines.',
-                 'dependencies': ['211', '021', '102'],
-                 'knowledge': {'buildings': ['gold mine']}},
-         }
-
-GAME_AREA_RECT = (GAME_OFFSETS['x'], GAME_OFFSETS['y'], GAME_WIDTH, GAME_HEIGHT)
 gameArea = gameDisplay.subsurface(GAME_AREA_RECT)
-MAP_OFFSET = ((GAME_WIDTH - (MAP_SIZE*TILE_WIDTH)) / 2,
-              (GAME_HEIGHT - (MAP_SIZE*TILE_HEIGHT)) / 2)
 maprect = (MAP_OFFSET[0], MAP_OFFSET[1], (MAP_SIZE*TILE_WIDTH), (MAP_SIZE*TILE_HEIGHT))
 mapArea = gameArea.subsurface(maprect)
-perkrect = (700, 75, 450, 450)
-perkArea = gameDisplay.subsurface(perkrect)
+perkArea = gameDisplay.subsurface(PERK_RECT)
 
 mapviewbutton = pygame.Surface((40, 40))
 mapviewbuttonpos = (GAME_WIDTH - 58, 18)
@@ -623,17 +33,22 @@ for x in range(3):
     for y in range(3):
         pygame.draw.rect(mapviewbutton, BLACK, (x*15, y*15, 10, 10))
 
-FONTS = {'small': pygame.font.SysFont(None, 15),
-         'medium': pygame.font.SysFont(None, 25),
-         '20': pygame.font.SysFont(None, 20),
-         'mediumbold': pygame.font.SysFont(None, 25, True),
-         '45': pygame.font.SysFont(None, 45),
-         'large': pygame.font.SysFont(None, 50)}
-
 rand_row = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 rand_col = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 random.shuffle(rand_row)
 random.shuffle(rand_col)
+
+perk_grid_y = -1
+last_j = 0
+for perk in PERKS:
+    j = int(perk[1])
+    k = int(perk[2])
+    if j + k != 0 and j == last_j:
+        PERKS[perk]['pos'] = (k, perk_grid_y)
+    else:
+        perk_grid_y += 1
+        PERKS[perk]['pos'] = (k, perk_grid_y)
+    last_j = j
 
 game = None
 
@@ -823,7 +238,7 @@ class TextLine(object):
     @property
     def surf(self):
         if self.__surf is None:
-            self.__surf, rect = text_objects(self.string, FONTS[self.font], self.color, self.bg)
+            self.__surf, _ = text_objects(self.string, FONTS[self.font], self.color, self.bg)
         return self.__surf
 
     def check_mouseover(self, relmouse):
@@ -1670,16 +1085,16 @@ def get_textlines(string, margin, centered=True, color=BLACK, font='medium', bg=
     max_width = 0
     for word in words:
         if len(cur_string) == 0:
-            cur_string = cur_string + word
-            temp_string = cur_string
+            temp_string = word
         else:
             temp_string = cur_string + ' ' + word
         temp_line = TextLine(temp_string, BLACK, font)
 
         if temp_line.rect.w > margin:
-            textline = TextLine(cur_string, color, font, bg, cur_string)
-            textlines.append(textline)
-            max_width = max(max_width, textline.rect.w)
+            if len(cur_string) > 0:
+                textline = TextLine(cur_string, color, font, bg, cur_string)
+                textlines.append(textline)
+                max_width = max(max_width, textline.rect.w)
             cur_string = word
         else:
             cur_string = temp_string
@@ -1709,10 +1124,6 @@ def get_name(item, num, cap):
             return ITEMS[item]['plural_i_cap']
         else:
             return ITEMS[item]['plural']
-
-
-def get_sell_val(item):
-    return ITEMS[item]['sell_value']
 
 
 def get_map_cost(grid_pos):
@@ -1768,52 +1179,6 @@ def do_confirm_popup(texts):
                     return False
 
 
-def all_maps_spawn(maps):
-    for row in maps:
-        for map in row:
-            if type(map) is Map:
-                map.rand_spawn()
-
-
-def draw_line(surf, pos1, pos2):
-    pygame.draw.line(surf, BLACK, pos1, pos2, 2)
-
-
-def page_select_surf(cur_page, text_surfaces):
-    page_index = pages.index(cur_page)
-    w_extra = DISPLAY_WIDTH-GAME_OFFSET[0]-GAME_WIDTH-10-page_select_rect.w-10
-    pages_surf = pygame.Surface((page_select_rect.w + w_extra, page_select_rect.h + 7))
-    pages_surf.fill(WHITE)
-    for txtsurf in text_surfaces:
-        pages_surf.blit(txtsurf.surf, (txtsurf.rect.x, txtsurf.rect.y + 4))
-    t = text_surfaces
-    btm = t[0].rect.bottom + 5
-    top = t[0].rect.top
-    y = (btm + top) / 2
-    last = len(pages) - 1
-
-    draw_line(pages_surf, (t[0].rect.left - 30, btm), (t[0].rect.left, top))
-    for i in range(last):
-        draw_line(pages_surf, (t[i].rect.left, top), (t[i].rect.right, top))
-        draw_line(pages_surf, (t[i].rect.right, top), (t[i].rect.right + 15, y))
-        draw_line(pages_surf, (t[i].rect.right + 15, y), (t[i].rect.right + 30, top))
-    draw_line(pages_surf, (t[last].rect.left, top), (t[last].rect.right, top))
-    draw_line(pages_surf, (t[last].rect.right, top), (t[last].rect.right + 30, btm))
-
-    for i in range(len(pages)):
-        if page_index == i:
-            draw_line(pages_surf, (t[0].rect.left - 45, btm), (t[i].rect.left - 30, btm))
-            draw_line(pages_surf, (t[i].rect.right + 30, btm), (t[last].rect.right + w_extra, btm))
-
-    for i in range(last):
-        if page_index == i + 1:
-            draw_line(pages_surf, (t[i].rect.right, btm), (t[i].rect.right + 15, y))
-        else:
-            draw_line(pages_surf, (t[i].rect.right + 15, y), (t[i+1].rect.left, btm))
-
-    return pages_surf
-
-
 pages = ['Inventory', 'Use', 'Craft', 'Build', 'Perks']
 page_surfaces = []
 page_select_rect = None
@@ -1821,7 +1186,6 @@ page_select_surfs = {}
 
 
 def do_page_select_surfs():
-    global pages
     global page_surfaces
     global page_select_rect
     global page_select_surfs
@@ -1837,7 +1201,41 @@ def do_page_select_surfs():
 
     page_select_surfs = {}
     for page in pages:
-        page_select_surfs[page] = page_select_surf(page, page_surfaces)
+        page_index = pages.index(page)
+        w_extra = DISPLAY_WIDTH-GAME_OFFSET[0]-GAME_WIDTH-10-page_select_rect.w-10
+        pages_surf = pygame.Surface((page_select_rect.w + w_extra, page_select_rect.h + 7))
+        pages_surf.fill(WHITE)
+        for txtsurf in page_surfaces:
+            pages_surf.blit(txtsurf.surf, (txtsurf.rect.x, txtsurf.rect.y + 4))
+        t = page_surfaces
+        btm = t[0].rect.bottom + 5
+        top = t[0].rect.top
+        y = (btm + top) / 2
+        last = len(pages) - 1
+
+        def draw_line(surf, pos1, pos2):
+            pygame.draw.line(surf, BLACK, pos1, pos2, 2)
+
+        draw_line(pages_surf, (t[0].rect.left - 30, btm), (t[0].rect.left, top))
+        for i in range(last):
+            draw_line(pages_surf, (t[i].rect.left, top), (t[i].rect.right, top))
+            draw_line(pages_surf, (t[i].rect.right, top), (t[i].rect.right + 15, y))
+            draw_line(pages_surf, (t[i].rect.right + 15, y), (t[i].rect.right + 30, top))
+        draw_line(pages_surf, (t[last].rect.left, top), (t[last].rect.right, top))
+        draw_line(pages_surf, (t[last].rect.right, top), (t[last].rect.right + 30, btm))
+
+        for i in range(len(pages)):
+            if page_index == i:
+                draw_line(pages_surf, (t[0].rect.left - 45, btm), (t[i].rect.left - 30, btm))
+                draw_line(pages_surf, (t[i].rect.right + 30, btm), (t[last].rect.right + w_extra, btm))
+
+        for i in range(last):
+            if page_index == i + 1:
+                draw_line(pages_surf, (t[i].rect.right, btm), (t[i].rect.right + 15, y))
+            else:
+                draw_line(pages_surf, (t[i].rect.right + 15, y), (t[i+1].rect.left, btm))
+
+        page_select_surfs[page] = pages_surf
 
 
 def do_crafting_popup(item):
@@ -2037,7 +1435,8 @@ def get_recipe_surfs():
         tooltip_textlines.append(TextLine('Costs:'))
         for thing, amt in player.recipes[key]['costs'].items():
             if thing != 'energy' or player.free_crafting is False:
-                text = '  '+ITEMS[thing]['i_cap']+': '+'{:,}'.format(amt)+' ('+'{:,}'.format(player.inventory[thing])+')'
+                text = ('  '+ITEMS[thing]['i_cap']+': '+'{:,}'.format(amt) +
+                        ' ('+'{:,}'.format(player.inventory[thing])+')')
                 if player.inventory[thing] < amt:
                     tooltip_textlines.append(TextLine(text, GREY))
                 else:
@@ -2068,7 +1467,8 @@ def get_build_surfs():
         tooltip_textlines.append(TextLine('Costs:'))
         for thing, amt in player.buildables[key]['buildcosts'].items():
             if thing != 'energy' or player.free_building is False:
-                text = '  '+ITEMS[thing]['i_cap']+': '+'{:,}'.format(amt)+' ('+'{:,}'.format(player.inventory[thing])+')'
+                text = ('  '+ITEMS[thing]['i_cap']+': '+'{:,}'.format(amt) +
+                        ' ('+'{:,}'.format(player.inventory[thing])+')')
                 if player.inventory[thing] < amt:
                     tooltip_textlines.append(TextLine(text, GREY))
                 else:
@@ -2099,7 +1499,7 @@ def get_usables_surfs():
                 tooltip_textlines.append(TextLine('  '+ITEMS[thing1]['i_cap']+' ('+'{:,}'.format(amt)+')'))
             tooltip_textlines.append(TextLine('Costs:'))
             for thing2, amt in player.usables[key]['costs'].items():
-                text = ('  '+ITEMS[thing2]['i_cap']+': '+'{:,}'.format(amt)+' ('+
+                text = ('  '+ITEMS[thing2]['i_cap']+': '+'{:,}'.format(amt)+' (' +
                         '{:,}'.format(player.inventory[thing2])+')')
                 if player.inventory[thing2] < amt:
                     tooltip_textlines.append(TextLine(text, GREY))
@@ -2115,12 +1515,12 @@ def get_usables_surfs():
     return usables_surfaces
 
 
-def get_sell_buttons(game):
+def get_sell_buttons():
     sell_buttons = []
     height = FONTS['medium'].render('10', True, BLACK).get_height()
     i = 100
     for key, value in player.inventory.items():
-        if key not in game.exclude and key in player.known_items:
+        if key not in INVENTORY_EXCLUDE and key in player.known_items:
             if value > 0:
                 button1 = Button(11, height-1, '1')
                 button1.tags.append(key)
@@ -2140,12 +1540,12 @@ def get_sell_buttons(game):
     return sell_buttons
 
 
-def get_buy_buttons(game):
+def get_buy_buttons():
     buy_buttons = []
     height = FONTS['medium'].render('10', True, BLACK).get_height()
     i = 100
     for key, value in player.inventory.items():
-        if key not in game.buy_exclude and key in player.known_items:
+        if key not in BUY_EXCLUDE and key in player.known_items:
             cost = ITEMS[key]['sell_value']*2
             if player.inventory['coins'] >= cost:
                 button1 = Button(11, height-1, '1')
@@ -2226,14 +1626,18 @@ def start_screen():
     log = Log()
     player = Player()
     game = None
+    y_spacing = DISPLAY_HEIGHT//4
     start_button = Button(250, 50, 'NEW GAME', BLACK, '45')
-    start_button.rect.topleft = ((DISPLAY_WIDTH - start_button.rect.w) / 2, 200)
+    start_button.rect.center = (DISPLAY_WIDTH / 2, y_spacing)
     cheat_button = Button(450, 50, 'NEW GAME WITH CHEATS', BLACK, '45')
-    cheat_button.rect.topleft = ((DISPLAY_WIDTH - cheat_button.rect.w) / 2, 400)
+    cheat_button.rect.center = (DISPLAY_WIDTH / 2, y_spacing*2)
+    load_button = Button(250, 50, 'LOAD GAME', BLACK, '45')
+    load_button.rect.center = (DISPLAY_WIDTH / 2, y_spacing*3)
 
     gameDisplay.fill(WHITE)
     gameDisplay.blit(start_button.surf, start_button.rect)
     gameDisplay.blit(cheat_button.surf, cheat_button.rect)
+    gameDisplay.blit(load_button.surf, load_button.rect)
     pygame.display.flip()
     while True:
         mouse = pygame.mouse.get_pos()
@@ -2252,6 +1656,8 @@ def start_screen():
                     do_page_select_surfs()
                     game = Game(cheats=True)
                     game.main()
+                if load_button.rect.collidepoint(mouse):
+                    load_game()
 
 
 def pause_screen():
@@ -2360,24 +1766,13 @@ class Game(object):
         self.recipe_surfaces = get_recipe_surfs()
         self.usables_surfaces = get_usables_surfs()
         self.build_surfaces = get_build_surfs()
-        self.sell_buttons = get_sell_buttons(self)
-        self.buy_buttons = get_buy_buttons(self)
+        self.sell_buttons = get_sell_buttons()
+        self.buy_buttons = get_buy_buttons()
 
         self.perks = []
         perk_max_x = 0
         perk_max_y = 0
-        perk_grid_y = -1
-        last_j = 0
         for perk in PERKS:
-            j = int(perk[1])
-            k = int(perk[2])
-            if j+k != 0 and j == last_j:
-                PERKS[perk]['pos'] = (k, perk_grid_y)
-            else:
-                perk_grid_y += 1
-                PERKS[perk]['pos'] = (k, perk_grid_y)
-            last_j = j
-
             self.perks.append(Perk(perk, **PERKS[perk]))
             perk_max_x = max(perk_max_x, PERK_OFFSET+(PERKS[perk]['pos'][0]+1)*(PERK_DIST+PERK_WIDTH))
             perk_max_y = max(perk_max_y, PERK_OFFSET+(PERKS[perk]['pos'][1]+1)*(PERK_DIST+PERK_HEIGHT))
@@ -2416,8 +1811,8 @@ class Game(object):
 
         pygame.time.set_timer(GAME_TICK, int(1000//TICKS_PER_SEC))
         self.timers = [
-                       Timer(5 * ONE_SEC, self.regen_energy, {}, True),
-                       Timer(5*ONE_SEC, all_maps_spawn, {'maps': self.maps}, True),
+                       Timer(5*ONE_SEC, self.regen_energy, {}, True),
+                       Timer(5*ONE_SEC, self.all_maps_spawn, {}, True),
                        Timer(int(ONE_SEC/20), self.update_map_surf, {}, True),
                        Timer(int(ONE_SEC/10), self.update_map_thumbs, {}, True),
                        Timer(ONE_SEC, self.update_item_history, {}, True)
@@ -2459,6 +1854,12 @@ class Game(object):
 
     def unflash_energy_bar(self):
         self.energy_bar_flash = False
+
+    def all_maps_spawn(self):
+        for row in self.maps:
+            for my_map in row:
+                if type(my_map) is Map:
+                    my_map.rand_spawn()
 
     def update_map_surf(self):
         self.cur_map.make_surf()
@@ -2555,6 +1956,8 @@ class Game(object):
             surf.clean()
         for surf in self.sell_buttons:
             surf.clean()
+        for surf in self.buy_buttons:
+            surf.clean()
         for perk in self.perks:
             perk.clean()
         self.perk_window.clean()
@@ -2644,7 +2047,7 @@ class Game(object):
         gameDisplay.blit(self.eat_button.surf, self.eat_button.rect)
 
         if self.cur_page == 'Inventory':
-            self.sell_buttons = get_sell_buttons(self)
+            self.sell_buttons = get_sell_buttons()
             for button in self.sell_buttons:
                 gameDisplay.blit(button.surf, button.rect.topleft)
 
@@ -2661,7 +2064,8 @@ class Game(object):
                     tmptext1 = FONTS['medium'].render(ITEMS[key]['i_cap']+':', True, BLACK)
                     tmptext2 = FONTS['medium'].render('{:,}'.format(value), True, BLACK)
                     tmptext2x = GAME_WIDTH + 275 - tmptext2.get_width()
-                    tmpstr3 = '{:,}'.format(get_sell_val(key))+' ('+'{:,}'.format(value*get_sell_val(key))+')'
+                    sell_val = ITEMS[key]['sell_value']
+                    tmpstr3 = '{:,}'.format(sell_val)+' ('+'{:,}'.format(value*sell_val)+')'
                     tmptext3 = FONTS['medium'].render(tmpstr3, True, BLACK)
                     tmptext3x = GAME_WIDTH + 440 - tmptext3.get_width()
                     gameDisplay.blit(tmptext1, (GAME_WIDTH + 100, 100 + i))
@@ -2732,7 +2136,7 @@ class Game(object):
                 if usesurf.rect.collidepoint(self.mouse):
                     tooltip = usesurf.tooltip
         elif self.cur_page == 'Buy':
-            self.buy_buttons = get_buy_buttons(self)
+            self.buy_buttons = get_buy_buttons()
             for button in self.buy_buttons:
                 gameDisplay.blit(button.surf, button.rect.topleft)
 
@@ -2750,7 +2154,8 @@ class Game(object):
                     tmptext1 = FONTS['medium'].render(ITEMS[key]['i_cap']+':', True, BLACK)
                     tmptext2 = FONTS['medium'].render('{:,}'.format(value), True, BLACK)
                     tmptext2x = GAME_WIDTH + 275 - tmptext2.get_width()
-                    tmpstr3 = '{:,}'.format(get_sell_val(key)*2)
+                    buy_val = ITEMS[key]['sell_value']*2
+                    tmpstr3 = '{:,}'.format(buy_val)
                     tmptext3 = FONTS['medium'].render(tmpstr3, True, BLACK)
                     tmptext3x = GAME_WIDTH + 340 - tmptext3.get_width()
                     gameDisplay.blit(tmptext1, (GAME_WIDTH + 100, 100 + i))
