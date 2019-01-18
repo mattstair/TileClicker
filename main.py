@@ -1,3 +1,4 @@
+import os.path
 import pygame
 import random
 import math
@@ -1626,18 +1627,22 @@ def start_screen():
     log = Log()
     player = Player()
     game = None
+    save_exists = os.path.isfile('save.pickle')
     y_spacing = DISPLAY_HEIGHT//4
     start_button = Button(250, 50, 'NEW GAME', BLACK, '45')
     start_button.rect.center = (DISPLAY_WIDTH / 2, y_spacing)
     cheat_button = Button(450, 50, 'NEW GAME WITH CHEATS', BLACK, '45')
     cheat_button.rect.center = (DISPLAY_WIDTH / 2, y_spacing*2)
-    load_button = Button(250, 50, 'LOAD GAME', BLACK, '45')
-    load_button.rect.center = (DISPLAY_WIDTH / 2, y_spacing*3)
+
+    if save_exists:
+        load_button = Button(250, 50, 'LOAD GAME', BLACK, '45')
+        load_button.rect.center = (DISPLAY_WIDTH / 2, y_spacing*3)
 
     gameDisplay.fill(WHITE)
     gameDisplay.blit(start_button.surf, start_button.rect)
     gameDisplay.blit(cheat_button.surf, cheat_button.rect)
-    gameDisplay.blit(load_button.surf, load_button.rect)
+    if save_exists:
+        gameDisplay.blit(load_button.surf, load_button.rect)
     pygame.display.flip()
     while True:
         mouse = pygame.mouse.get_pos()
@@ -1656,7 +1661,7 @@ def start_screen():
                     do_page_select_surfs()
                     game = Game(cheats=True)
                     game.main()
-                if load_button.rect.collidepoint(mouse):
+                if save_exists and load_button.rect.collidepoint(mouse):
                     load_game()
 
 
@@ -1671,9 +1676,15 @@ def pause_screen():
     gameDisplay.blit(greyout, (0, 0))
     question_text = TextLine('PAUSED', BLACK, 'large')
     question_text.rect.center = (centerx, 50)
+
+    save_exists = os.path.isfile('save.pickle')
+
     continue_button = Button(100, 25, 'Continue')
     save_button = Button(100, 25, 'Save')
-    load_button = Button(100, 25, 'Load')
+    if save_exists:
+        load_button = Button(100, 25, 'Load')
+    else:
+        load_button = Button(100, 25, 'Load', GREY)
     menu_button = Button(100, 25, 'Main Menu')
     exit_button = Button(100, 25, 'Exit')
     continue_button.rect.midtop = (centerx, 100)
@@ -1713,7 +1724,7 @@ def pause_screen():
                         pickle.dump(game, f)
                     log.add_line(TextLine('game saved', GREEN))
                     in_menu = False
-                if load_button.rect.collidepoint(game_mouse):
+                if save_exists and load_button.rect.collidepoint(game_mouse):
                     target = 'load'
                     in_menu = False
                 if menu_button.rect.collidepoint(game_mouse):
@@ -1731,8 +1742,9 @@ def load_game():
         log = pickle.load(f)
         player = pickle.load(f)
         pages = pickle.load(f)
+        do_page_select_surfs()
+        game = Game()
         game = pickle.load(f)
-    do_page_select_surfs()
     game.page_select_surf = page_select_surfs[game.cur_page]
     game.energy_text.rect.x, game.energy_text.rect.y = 50, 6
     game.main()
